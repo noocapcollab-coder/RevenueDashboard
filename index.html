@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NOOCAP — Sponsor Revenue</title>
+<style>
+  :root{--bg:#0a0e17;--card:#141b2b;--card2:#0f1626;--line:#212c44;--text:#eef1f7;--muted:#8b94ab;
+    --accent:#34d399;--accentd:#0e3a2c;--amber:#fbbf24;--amberd:#3a2e0f;--danger:#fb7185;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:20px;max-width:1040px;margin:0 auto}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600}
+  .brand .b{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#04231a;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .live{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .live .d{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .live .d.off{background:var(--danger)}
+  .pills{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:2px;flex-wrap:wrap}
+  .pills button{background:transparent;border:0;color:var(--muted);font:inherit;font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer}
+  .pills button.on{background:var(--card);color:var(--text)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 13px}
+  .kpi .l{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:7px}
+  .kpi .v{font-size:22px;font-weight:600;letter-spacing:-.5px}
+  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)}
+  .tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .search{flex:1;min-width:150px;display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  .search input{flex:1;background:transparent;border:0;color:var(--text);font:inherit;font-size:13px;outline:none}
+  .search i{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .15s,transform .1s}
+  .card:hover{border-color:#36507f;transform:translateY(-1px)}
+  .ch{display:flex;align-items:center;gap:10px}
+  .av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#0a0e17}
+  .cn{font-size:14px;font-weight:600;line-height:1.1}
+  .cmeta{font-size:11px;color:var(--muted);margin-top:2px}
+  .chev{margin-left:auto;color:var(--muted)}
+  .crecv{margin:13px 0 0;display:flex;align-items:baseline;gap:7px}
+  .crecv .v{font-size:24px;font-weight:600;color:var(--accent);letter-spacing:-.5px}
+  .crecv .l{font-size:11px;color:var(--muted)}
+  .prog{height:6px;background:var(--card2);border-radius:4px;overflow:hidden;margin:10px 0 5px}
+  .prog .f{height:100%;background:var(--accent);border-radius:4px;transition:width .25s}
+  .pl{font-size:10px;color:var(--muted)}
+  .back{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:7px 12px;border-radius:9px;cursor:pointer;margin-bottom:13px}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px}
+  .hero .av{width:46px;height:46px;border-radius:12px;font-size:16px}
+  .hero .big{font-size:30px;font-weight:600;color:var(--accent);letter-spacing:-1px;line-height:1}
+  .hero .cap{font-size:12px;color:var(--muted);margin-top:4px}
+  .sec{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+  .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+  .v .m{flex:1;min-width:120px}
+  .v .t{font-size:13px;font-weight:500}
+  .v .st{margin-top:4px;display:flex;gap:6px;align-items:center}
+  .chip{font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+  .chip.red{color:#fda4af;border-color:#3b1d28}
+  .chip.amber{color:var(--amber);border-color:var(--amberd)}
+  .chip.green{color:var(--accent);border-color:var(--accentd)}
+  .lnk{color:var(--muted);text-decoration:none}
+  .lnk:hover{color:var(--accent)}
+  .ab{display:flex;align-items:center;gap:2px}
+  .ab span{color:var(--muted);font-size:13px}
+  .ab input{width:64px;text-align:right;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:13px;padding:5px 7px;border-radius:7px;outline:none}
+  .ab input:focus{border-color:var(--accent)}
+  .sugg{font-size:11px;color:var(--accent);background:transparent;border:1px dashed var(--accentd);padding:5px 8px;border-radius:7px;cursor:pointer}
+  .pay{background:var(--card2);border:1px solid var(--line);color:var(--muted);font:inherit;font-size:11px;padding:5px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .pay.on{background:var(--accentd);border-color:var(--accentd);color:var(--accent)}
+  .dt{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:11px;padding:4px 6px;border-radius:7px;outline:none;color-scheme:dark}
+  .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
+</style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand"><span class="b"><i class="ti ti-cash" aria-hidden="true"></i></span> Sponsor revenue</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="live"><span class="d" id="dot"></span> <span id="status">Loading…</span></span>
+      <div class="pills" id="months"></div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="l">received</div><div class="v g" id="k-recv">$0</div></div>
+    <div class="kpi"><div class="l">pipeline</div><div class="v a" id="k-pipe">$0</div></div>
+    <div class="kpi"><div class="l">videos</div><div class="v" id="k-count">0</div></div>
+    <div class="kpi"><div class="l">collected</div><div class="v g" id="k-rate">0%</div></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+  <div id="view"></div>
+
+<script>
+const fmt=n=>"$"+Math.round(Number(n)||0).toLocaleString();
+const mKey=s=>(s||"").slice(0,7);
+const curMonth=()=>new Date().toISOString().slice(0,7);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+const colors={Brad:"#60a5fa",Chris:"#fbbf24",Lindsay:"#f472b6",Duncan:"#a78bfa",Valeri:"#34d399",Emtech:"#fb7185",Dymtro:"#4ade80",Jonathan:"#f0abfc"};
+
+let VIDEOS=[], sel=curMonth(), view="grid", query="", filter="all", busy=false;
+
+const fmtM=m=>new Date(m+"-01").toLocaleString("en",{month:"short",year:"numeric"});
+const fmtMl=m=>new Date(m+"-01").toLocaleString("en",{month:"long",year:"numeric"});
+const ini=n=>n.slice(0,2).toUpperCase();
+
+function setStatus(ok,msg){ $("dot").className="d"+(ok?"":" off"); $("status").textContent=msg; }
+function showBanner(msg){ const b=$("banner"); if(!msg){b.style.display="none";return;} b.textContent=msg; b.style.display="block"; }
+
+async function load(){
+  try{
+    const r=await fetch("/api/revenue-data",{cache:"no-store"});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"load failed");
+    VIDEOS=j.videos||[];
+    showBanner("");
+    setStatus(true,"updated "+new Date(j.generatedAt).toLocaleTimeString());
+    render();
+  }catch(e){
+    setStatus(false,"offline — retrying");
+    showBanner("Could not reach Notion: "+e.message);
+  }
+}
+
+function months(){
+  const s=new Set([curMonth()]);
+  VIDEOS.forEach(v=>{ if(v.paid&&v.paidDate) s.add(mKey(v.paidDate)); });
+  return [...s].sort().reverse();
+}
+function chip(s){
+  const x=(s||"").toLowerCase(); let k="";
+  if(x.includes("change"))k="red"; else if(x.includes("edit")||x.includes("film"))k="amber";
+  else if(x.includes("ready")||x.includes("post"))k="green";
+  return '<span class="chip '+k+'">'+(s||"—")+'</span>';
+}
+function openLink(v){ return v.link?' · <a class="lnk" href="'+v.link+'" target="_blank" rel="noopener">open</a>':""; }
+function pass(v){
+  if(filter==="paid"&&!v.paid)return false;
+  if(filter==="unpaid"&&v.paid)return false;
+  if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
+  return true;
+}
+
+function kpis(){
+  const recv=VIDEOS.filter(v=>v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0);
+  const pipe=VIDEOS.filter(v=>v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
+  const booked=VIDEOS.reduce((a,v)=>a+(v.amount||0),0);
+  const got=VIDEOS.filter(v=>v.paid).reduce((a,v)=>a+(v.amount||0),0);
+  $("k-recv").textContent=fmt(recv);
+  $("k-pipe").textContent=fmt(pipe);
+  $("k-count").textContent=VIDEOS.length;
+  $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
+}
+function monthsBar(){
+  $("months").innerHTML=months().map(m=>'<button data-m="'+m+'" class="'+(m===sel?"on":"")+'">'+fmtM(m)+'</button>').join("");
+  document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{sel=b.dataset.m;render();});
+}
+function render(){
+  const ms=months(); if(!ms.includes(sel)) sel=ms[0];
+  monthsBar(); kpis();
+  view==="grid"?grid():detail(view);
+}
+
+function grid(){
+  const names=[...new Set(VIDEOS.map(v=>v.creator))];
+  const recvBy={},vis={};
+  names.forEach(n=>{
+    recvBy[n]=VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0);
+    vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v));
+  });
+  const show=names.filter(n=>vis[n].length).sort((a,b)=>recvBy[b]-recvBy[a]||a.localeCompare(b));
+  const cards=show.length?show.map(n=>{
+    const tot=VIDEOS.filter(v=>v.creator===n).reduce((a,v)=>a+(v.amount||0),0);
+    const got=VIDEOS.filter(v=>v.creator===n&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
+    const pct=tot?Math.round(got/tot*100):0;
+    return '<div class="card" data-open="'+esc(n)+'"><div class="ch">'+
+      '<div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
+      '<div><div class="cn">'+n+'</div><div class="cmeta">'+vis[n].length+' sponsor video'+(vis[n].length>1?"s":"")+'</div></div>'+
+      '<span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>'+
+      '<div class="crecv"><span class="v">'+fmt(recvBy[n])+'</span><span class="l">received this month</span></div>'+
+      '<div class="prog"><div class="f" style="width:'+pct+'%"></div></div>'+
+      '<div class="pl">'+fmt(got)+' of '+fmt(tot)+' collected</div></div>';
+  }).join(""):'<div class="empty" style="border:0">No sponsor videos match.</div>';
+  $("view").innerHTML='<div class="tools"><div class="search"><i class="ti ti-search" aria-hidden="true"></i>'+
+    '<input id="q" placeholder="Search creator or video…" value="'+esc(query)+'" /></div>'+
+    '<div class="pills" id="filter">'+["all","unpaid","paid"].map(f=>'<button data-f="'+f+'" class="'+(f===filter?"on":"")+'">'+f[0].toUpperCase()+f.slice(1)+'</button>').join("")+'</div></div>'+
+    '<div class="grid">'+cards+'</div>';
+  const q=$("q"); if(q) q.oninput=e=>{query=e.target.value.toLowerCase().trim();grid();};
+  document.querySelectorAll("#filter [data-f]").forEach(b=>b.onclick=()=>{filter=b.dataset.f;grid();});
+  document.querySelectorAll("[data-open]").forEach(c=>c.onclick=()=>{view=c.dataset.open;render();});
+}
+
+function detail(n){
+  const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel);
+  const awaiting=VIDEOS.filter(v=>v.creator===n&&!v.paid);
+  const total=paid.reduce((a,v)=>a+(v.amount||0),0);
+  const row=v=>{
+    const i=VIDEOS.indexOf(v);
+    const amount=v.amount!=null?v.amount:"";
+    const sugg=(!v.amount&&v.suggested)?'<button class="sugg" data-act="sugg" data-i="'+i+'">use '+fmt(v.suggested)+'</button>':"";
+    const recv=v.paid?'<input class="dt" type="date" data-act="date" data-i="'+i+'" value="'+(v.paidDate||"")+'"/>':"";
+    return '<div class="v"><div class="m"><div class="t">'+esc(v.title)+'</div>'+
+      '<div class="st">'+chip(v.status)+openLink(v)+'</div></div>'+
+      '<div class="ab"><span>$</span><input inputmode="numeric" data-act="amt" data-i="'+i+'" value="'+amount+'" placeholder="0"/></div>'+sugg+
+      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+'</div>';
+  };
+  $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
+    '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
+    '<div><div class="big">'+fmt(total)+'</div><div class="cap">'+n+' · '+fmtMl(sel)+'</div></div></div>'+
+    '<div class="sec">Paid in '+fmtMl(sel)+' ('+paid.length+')</div>'+
+    (paid.length?paid.map(row).join(""):'<div class="empty">No payments received this month.</div>')+
+    '<div class="sec">Awaiting payment</div>'+
+    (awaiting.length?awaiting.map(row).join(""):'<div class="empty">Nothing outstanding.</div>');
+  $("back").onclick=()=>{view="grid";render();};
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    const i=+el.dataset.i,a=el.dataset.act,v=VIDEOS[i];
+    if(a==="amt")el.onchange=()=>{const x=parseInt(String(el.value).replace(/[^0-9]/g,""),10);save(v,{amount:isNaN(x)?null:x});};
+    if(a==="sugg")el.onclick=()=>save(v,{amount:v.suggested});
+    if(a==="paid")el.onclick=()=>{const paid=!v.paid;save(v,{paid,paidDate:paid?(v.paidDate||today()):""});};
+    if(a==="date")el.onchange=()=>save(v,{paid:true,paidDate:el.value});
+  });
+}
+
+async function save(v, patch){
+  if(busy) return;
+  busy=true; setStatus(true,"saving…");
+  const payload={
+    revPageId:v.revPageId||undefined, link:v.link, title:v.title, creator:v.creator,
+    amount:("amount" in patch)?patch.amount:v.amount,
+    paid:("paid" in patch)?patch.paid:v.paid,
+    paidDate:("paidDate" in patch)?patch.paidDate:v.paidDate,
+  };
+  try{
+    const r=await fetch("/api/revenue-set",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"save failed");
+    await load();
+  }catch(e){ showBanner("Save failed: "+e.message); setStatus(false,"save failed"); }
+  finally{ busy=false; }
+}
+
+load();
+setInterval(()=>{
+  if(busy) return;
+  if(document.activeElement && document.activeElement.tagName==="INPUT") return;
+  load();
+}, 20000);
+</script>
+</body>
+</html>
