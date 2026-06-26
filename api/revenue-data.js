@@ -9,6 +9,7 @@ const TOKEN = process.env.NOTION_TOKEN;
 
 const REV_DS = "9f799a64-92cb-4d7b-83b7-100f5bc77464";   // Sponsor Video Revenue
 const DEALS_DS = "70d26268-6d57-4d45-abf7-a599c6f8e0f4"; // Brand Deals Pipeline
+const CUT_DS = "d63fb0df-db77-4cd9-9c94-0d74a36cfebf";   // Creator Cut
 
 // Each creator -> the source data source IDs to read.
 // Most have one short-form board. Chris and Lindsay also have a separate long-form
@@ -141,8 +142,12 @@ module.exports = async function handler(req, res) {
     });
     merged.sort((a, b) => (a.creator === b.creator ? a.title.localeCompare(b.title) : a.creator.localeCompare(b.creator)));
 
+    const cutRows = (await queryAll(CUT_DS)).map((pg) => ({ creator: titleOf(pg), pct: num(pg, "Cut Percent") }));
+    const cuts = {};
+    cutRows.forEach((r) => { if (r.creator) cuts[r.creator] = r.pct || 0; });
+
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged });
+    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged, cuts });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e.message || e) });
   }
