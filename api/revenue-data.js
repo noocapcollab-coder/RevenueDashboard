@@ -1,7 +1,8 @@
 // NOOCAP Sponsor Revenue — read endpoint (internal only)
-// Reads sponsor-tagged videos from each creator's board(s) — short-form and, where
-// it exists as a separate source, long-form — merges the Sponsor Video Revenue table,
-// and suggests amounts from the Brand Deals Pipeline.
+// Reads sponsor-tagged videos from each creator's board(s), merges the Sponsor Video
+// Revenue table, suggests amounts from the Brand Deals Pipeline, and applies per-creator
+// cut percentages. Resilient: a source that can't be read is skipped and reported in
+// `warnings` rather than failing the whole dashboard.
 
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
@@ -11,10 +12,6 @@ const REV_DS = "9f799a64-92cb-4d7b-83b7-100f5bc77464";   // Sponsor Video Revenu
 const DEALS_DS = "70d26268-6d57-4d45-abf7-a599c6f8e0f4"; // Brand Deals Pipeline
 const CUT_DS = "d63fb0df-db77-4cd9-9c94-0d74a36cfebf";   // Creator Cut
 
-// Each creator -> the source data source IDs to read.
-// Most have one short-form board. Chris and Lindsay also have a separate long-form
-// board. Valeri's long-form is just another view of the same source, so it's not
-// listed twice. Joshua is intentionally excluded.
 const BOARDS = {
   Brad: ["28b508e9-9dda-81ba-8d7f-000b84b83fbd"],
   Chris: ["2a1508e9-9dda-8125-bd63-000bb75578dd", "337508e9-9dda-806a-b4e7-000b6cee3fb6"],
@@ -43,7 +40,8 @@ async function queryAll(dataSourceId) {
     });
     if (!r.ok) {
       const t = await r.text();
-      throw new Error(`Notion ${r.status} on ${dataSourceId}: ${t.slice(0, 200)}`);
+      const code = (() => { try { return JSON.parse(t).code; } catch { return r.status; } })();
+      throw new Error(String(code));
     }
     const j = await r.json();
     rows.push(...(j.results || []));
@@ -60,7 +58,7 @@ function titleOf(page) {
 }
 function statusOf(page) {
   const p = props(page);
-  const c = p["Status"] || p["status"];
+  const c = p["Status"] || p["status"] || p["STATUS"];
   if (!c) return "";
   if (c.type === "status") return c.status ? c.status.name : "";
   if (c.type === "select") return c.select ? c.select.name : "";
@@ -79,17 +77,23 @@ function selectName(page, name) { const v = props(page)[name]; return v && v.typ
 function checkbox(page, name) { const v = props(page)[name]; return !!(v && v.type === "checkbox" && v.checkbox); }
 function urlOf(page, name) { const v = props(page)[name]; return v && v.type === "url" ? v.url : ""; }
 function dateStart(page, name) { const v = props(page)[name]; return v && v.type === "date" && v.date ? v.date.start : ""; }
-function richText(page, name) { const v = props(page)[name]; return v && v.type === "rich_text" ? (v.rich_text || []).map((t) => t.plain_text).join("") : ""; }
 
 module.exports = async function handler(req, res) {
   try {
     if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
 
+    const warnings = [];
+    async function safeQuery(ds, label) {
+      try { return await queryAll(ds); }
+      catch (e) { warnings.push(`${label} couldn't be read (${String(e.message || e)})`); return []; }
+    }
+
+    // Boards (resilient per board)
     const tasks = [];
     for (const [creator, dsList] of Object.entries(BOARDS)) {
       for (const ds of dsList) {
         tasks.push(
-          queryAll(ds).then((pages) =>
+          safeQuery(ds, creator).then((pages) =>
             pages
               .filter(isSponsor)
               .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url }))
@@ -105,7 +109,7 @@ module.exports = async function handler(req, res) {
       return true;
     });
 
-    const revRows = (await queryAll(REV_DS)).map((pg) => ({
+    const revRows = (await safeQuery(REV_DS, "Revenue table")).map((pg) => ({
       revPageId: pg.id,
       link: urlOf(pg, "Video Link"),
       amount: num(pg, "Amount USD"),
@@ -115,7 +119,7 @@ module.exports = async function handler(req, res) {
     const revByLink = {};
     revRows.forEach((r) => { if (r.link) revByLink[r.link] = r; });
 
-    const deals = (await queryAll(DEALS_DS)).map((pg) => ({
+    const deals = (await safeQuery(DEALS_DS, "Deals pipeline")).map((pg) => ({
       creator: selectName(pg, "Creator"),
       brand: titleOf(pg),
       rate: num(pg, "Final Rate USD") ?? num(pg, "Offer Amount"),
@@ -125,6 +129,12 @@ module.exports = async function handler(req, res) {
       const hit = deals.find((d) => d.creator === creator && d.rate && d.brand && t.includes(d.brand.toLowerCase()));
       return hit ? hit.rate : null;
     }
+
+    const cuts = {};
+    (await safeQuery(CUT_DS, "Creator Cut")).forEach((pg) => {
+      const c = titleOf(pg);
+      if (c) cuts[c] = num(pg, "Cut Percent") || 0;
+    });
 
     const merged = videos.map((v) => {
       const rev = revByLink[v.link];
@@ -142,12 +152,8 @@ module.exports = async function handler(req, res) {
     });
     merged.sort((a, b) => (a.creator === b.creator ? a.title.localeCompare(b.title) : a.creator.localeCompare(b.creator)));
 
-    const cutRows = (await queryAll(CUT_DS)).map((pg) => ({ creator: titleOf(pg), pct: num(pg, "Cut Percent") }));
-    const cuts = {};
-    cutRows.forEach((r) => { if (r.creator) cuts[r.creator] = r.pct || 0; });
-
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged, cuts });
+    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged, cuts, warnings });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e.message || e) });
   }
