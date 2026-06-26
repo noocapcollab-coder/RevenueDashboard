@@ -132,8 +132,12 @@ async function load(){
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||"load failed");
     VIDEOS=j.videos||[]; CUTS=j.cuts||{};
-    if(j.warnings&&j.warnings.length) showBanner("Some sources couldn't be read — "+j.warnings.join(" · "), true);
-    else showBanner("");
+    let notice=(j.warnings&&j.warnings.length)?j.warnings.join(" · "):"";
+    if(!VIDEOS.length&&j.debug&&j.debug.length){
+      const d=j.debug.map(x=>x.creator+": "+x.rows+"r/"+x.sponsors+"s").join("  ");
+      notice=(notice?notice+" — ":"")+"no videos loaded · "+d;
+    }
+    if(notice) showBanner(notice,true); else showBanner("");
     setStatus(true,"updated "+new Date(j.generatedAt).toLocaleTimeString());
     render();
   }catch(e){
