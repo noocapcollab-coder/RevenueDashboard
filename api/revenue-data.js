@@ -74,6 +74,19 @@ function selectName(page, name) { const v = props(page)[name]; return v && v.typ
 function checkbox(page, name) { const v = props(page)[name]; return !!(v && v.type === "checkbox" && v.checkbox); }
 function urlOf(page, name) { const v = props(page)[name]; return v && v.type === "url" ? v.url : ""; }
 function dateStart(page, name) { const v = props(page)[name]; return v && v.type === "date" && v.date ? v.date.start : ""; }
+function videoDate(page) {
+  const entries = Object.entries(props(page)).filter(([, v]) => v.type === "date" && v.date && v.date.start);
+  if (!entries.length) return "";
+  const score = (name) => {
+    const n = name.toLowerCase();
+    if (/post/.test(n)) return 5;
+    if (n === "da" || /\bdate\b/.test(n) || /air|publish/.test(n)) return 4;
+    if (/due/.test(n)) return 2;
+    return 1;
+  };
+  entries.sort((a, b) => score(b[0]) - score(a[0]));
+  return (entries[0][1].date.start || "").slice(0, 10);
+}
 
 module.exports = async function handler(req, res) {
   try {
@@ -91,7 +104,7 @@ module.exports = async function handler(req, res) {
           catch (e) { warnings.push(`${creator} board couldn't be read (${String(e.message || e)})`); }
           const items = pages
             .filter(isSponsor)
-            .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id }))
+            .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id, date: videoDate(pg) }))
             .filter((v) => v.status !== "Archive");
           return { creator, rows: pages.length, sponsors: items.length, items };
         })
@@ -145,6 +158,7 @@ module.exports = async function handler(req, res) {
         title: v.title,
         status: v.status,
         link: v.link,
+        date: v.date,
         revPageId: rev ? rev.revPageId : null,
         amount: rev ? rev.amount : null,
         paid: rev ? rev.paid : false,
