@@ -6,7 +6,8 @@
 <title>NOOCAP — Sponsor Revenue</title>
 <style>
   :root{--bg:#0a0e17;--card:#141b2b;--card2:#0f1626;--line:#212c44;--text:#eef1f7;--muted:#8b94ab;
-    --accent:#34d399;--accentd:#0e3a2c;--amber:#fbbf24;--amberd:#3a2e0f;--danger:#fb7185;}
+    --accent:#34d399;--accentd:#0e3a2c;--amber:#fbbf24;--amberd:#3a2e0f;--danger:#fb7185;
+    --indigo:#818cf8;--indigod:#1e2350;}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -23,9 +24,18 @@
   .pills button.on{background:var(--card);color:var(--text)}
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 13px}
-  .kpi .l{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:7px}
-  .kpi .v{font-size:22px;font-weight:600;letter-spacing:-.5px}
-  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)}
+  .kpi .l{font-size:11px;color:var(--muted);margin-bottom:7px}
+  .kpi .v{font-size:21px;font-weight:600;letter-spacing:-.5px}
+  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)} .kpi .v.i{color:var(--indigo)}
+  .noocap{background:linear-gradient(135deg,#161d34,#1a1838);border:1px solid var(--indigod);border-radius:14px;padding:15px 17px;margin-bottom:14px}
+  .noocap .hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+  .badge .b{width:24px;height:24px;border-radius:7px;background:var(--indigo);color:#0a0e17;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .noocap .big{font-size:26px;font-weight:600;color:var(--indigo);letter-spacing:-.8px;text-align:right}
+  .noocap .cap{font-size:11px;color:var(--muted);text-align:right}
+  .noocap .split{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .noocap .split .s{font-size:12px;color:var(--muted)}
+  .noocap .split .s b{color:var(--text);font-weight:600}
   .tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
   .search{flex:1;min-width:150px;display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
   .search input{flex:1;background:transparent;border:0;color:var(--text);font:inherit;font-size:13px;outline:none}
@@ -39,16 +49,21 @@
   .cmeta{font-size:11px;color:var(--muted);margin-top:2px}
   .chev{margin-left:auto;color:var(--muted)}
   .crecv{margin:13px 0 0;display:flex;align-items:baseline;gap:7px}
-  .crecv .v{font-size:24px;font-weight:600;color:var(--accent);letter-spacing:-.5px}
+  .crecv .v{font-size:23px;font-weight:600;color:var(--accent);letter-spacing:-.5px}
   .crecv .l{font-size:11px;color:var(--muted)}
-  .prog{height:6px;background:var(--card2);border-radius:4px;overflow:hidden;margin:10px 0 5px}
-  .prog .f{height:100%;background:var(--accent);border-radius:4px;transition:width .25s}
-  .pl{font-size:10px;color:var(--muted)}
+  .cutrow{display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+  .cutlbl{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .cutlbl input{width:42px;text-align:right;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:3px 5px;border-radius:6px;outline:none}
+  .cutlbl input:focus{border-color:var(--indigo)}
+  .cutval{font-size:15px;font-weight:600;color:var(--indigo)}
   .back{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:7px 12px;border-radius:9px;cursor:pointer;margin-bottom:13px}
   .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px}
   .hero .av{width:46px;height:46px;border-radius:12px;font-size:16px}
   .hero .big{font-size:30px;font-weight:600;color:var(--accent);letter-spacing:-1px;line-height:1}
   .hero .cap{font-size:12px;color:var(--muted);margin-top:4px}
+  .hero .splitline{font-size:11px;color:var(--muted);margin-top:7px}
+  .hero .splitline b{color:var(--indigo);font-weight:600}
+  .hero .splitline .net{color:var(--text)}
   .sec{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
   .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
   .v .m{flex:1;min-width:120px}
@@ -82,9 +97,9 @@
   </div>
 
   <div class="kpis">
-    <div class="kpi"><div class="l">received</div><div class="v g" id="k-recv">$0</div></div>
+    <div class="kpi"><div class="l">gross received</div><div class="v g" id="k-gross">$0</div></div>
+    <div class="kpi"><div class="l">NOOCAP cut</div><div class="v i" id="k-cut">$0</div></div>
     <div class="kpi"><div class="l">pipeline</div><div class="v a" id="k-pipe">$0</div></div>
-    <div class="kpi"><div class="l">videos</div><div class="v" id="k-count">0</div></div>
     <div class="kpi"><div class="l">collected</div><div class="v g" id="k-rate">0%</div></div>
   </div>
 
@@ -100,11 +115,12 @@ const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"
 const $=id=>document.getElementById(id);
 const colors={Brad:"#60a5fa",Chris:"#fbbf24",Lindsay:"#f472b6",Duncan:"#a78bfa",Valeri:"#34d399",Emtech:"#fb7185",Dymtro:"#4ade80",Jonathan:"#f0abfc"};
 
-let VIDEOS=[], sel=curMonth(), view="grid", query="", filter="all", busy=false;
+let VIDEOS=[], CUTS={}, sel=curMonth(), view="grid", query="", filter="all", busy=false;
 
 const fmtM=m=>new Date(m+"-01").toLocaleString("en",{month:"short",year:"numeric"});
 const fmtMl=m=>new Date(m+"-01").toLocaleString("en",{month:"long",year:"numeric"});
 const ini=n=>n.slice(0,2).toUpperCase();
+const cutOf=n=>Number(CUTS[n])||0;
 
 function setStatus(ok,msg){ $("dot").className="d"+(ok?"":" off"); $("status").textContent=msg; }
 function showBanner(msg){ const b=$("banner"); if(!msg){b.style.display="none";return;} b.textContent=msg; b.style.display="block"; }
@@ -114,7 +130,7 @@ async function load(){
     const r=await fetch("/api/revenue-data",{cache:"no-store"});
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||"load failed");
-    VIDEOS=j.videos||[];
+    VIDEOS=j.videos||[]; CUTS=j.cuts||{};
     showBanner("");
     setStatus(true,"updated "+new Date(j.generatedAt).toLocaleTimeString());
     render();
@@ -142,15 +158,19 @@ function pass(v){
   if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
   return true;
 }
+function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0); }
+function cutAmt(n){ return Math.round(grossOf(n)*cutOf(n)/100); }
 
 function kpis(){
-  const recv=VIDEOS.filter(v=>v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0);
+  const names=[...new Set(VIDEOS.map(v=>v.creator))];
+  const gross=names.reduce((a,n)=>a+grossOf(n),0);
+  const cut=names.reduce((a,n)=>a+cutAmt(n),0);
   const pipe=VIDEOS.filter(v=>v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
   const booked=VIDEOS.reduce((a,v)=>a+(v.amount||0),0);
   const got=VIDEOS.filter(v=>v.paid).reduce((a,v)=>a+(v.amount||0),0);
-  $("k-recv").textContent=fmt(recv);
+  $("k-gross").textContent=fmt(gross);
+  $("k-cut").textContent=fmt(cut);
   $("k-pipe").textContent=fmt(pipe);
-  $("k-count").textContent=VIDEOS.length;
   $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
 }
 function monthsBar(){
@@ -165,37 +185,47 @@ function render(){
 
 function grid(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
-  const recvBy={},vis={};
-  names.forEach(n=>{
-    recvBy[n]=VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0);
-    vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v));
-  });
-  const show=names.filter(n=>vis[n].length).sort((a,b)=>recvBy[b]-recvBy[a]||a.localeCompare(b));
+  const vis={};
+  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v)); });
+  const show=names.filter(n=>vis[n].length).sort((a,b)=>grossOf(b)-grossOf(a)||a.localeCompare(b));
+
+  const cutTot=names.reduce((a,n)=>a+cutAmt(n),0);
+  const earners=names.filter(n=>cutAmt(n)>0).sort((a,b)=>cutAmt(b)-cutAmt(a));
+  const noocap='<div class="noocap"><div class="hd">'+
+    '<div class="badge"><span class="b">N</span> NOOCAP cut</div>'+
+    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap">'+fmtMl(sel)+' · agency take</div></div></div>'+
+    '<div class="split">'+(earners.length?earners.map(n=>'<div class="s"><b>'+fmt(cutAmt(n))+'</b> '+n+'</div>').join(""):'<div class="s">No collected revenue yet this month.</div>')+'</div></div>';
+
   const cards=show.length?show.map(n=>{
-    const tot=VIDEOS.filter(v=>v.creator===n).reduce((a,v)=>a+(v.amount||0),0);
-    const got=VIDEOS.filter(v=>v.creator===n&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
-    const pct=tot?Math.round(got/tot*100):0;
     return '<div class="card" data-open="'+esc(n)+'"><div class="ch">'+
       '<div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
       '<div><div class="cn">'+n+'</div><div class="cmeta">'+vis[n].length+' sponsor video'+(vis[n].length>1?"s":"")+'</div></div>'+
       '<span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>'+
-      '<div class="crecv"><span class="v">'+fmt(recvBy[n])+'</span><span class="l">received this month</span></div>'+
-      '<div class="prog"><div class="f" style="width:'+pct+'%"></div></div>'+
-      '<div class="pl">'+fmt(got)+' of '+fmt(tot)+' collected</div></div>';
+      '<div class="crecv"><span class="v">'+fmt(grossOf(n))+'</span><span class="l">gross received</span></div>'+
+      '<div class="cutrow"><div class="cutlbl">NOOCAP cut <input inputmode="numeric" data-cut="'+esc(n)+'" value="'+cutOf(n)+'" />%</div>'+
+      '<div class="cutval">'+fmt(cutAmt(n))+'</div></div></div>';
   }).join(""):'<div class="empty" style="border:0">No sponsor videos match.</div>';
-  $("view").innerHTML='<div class="tools"><div class="search"><i class="ti ti-search" aria-hidden="true"></i>'+
+
+  $("view").innerHTML=noocap+
+    '<div class="tools"><div class="search"><i class="ti ti-search" aria-hidden="true"></i>'+
     '<input id="q" placeholder="Search creator or video…" value="'+esc(query)+'" /></div>'+
     '<div class="pills" id="filter">'+["all","unpaid","paid"].map(f=>'<button data-f="'+f+'" class="'+(f===filter?"on":"")+'">'+f[0].toUpperCase()+f.slice(1)+'</button>').join("")+'</div></div>'+
     '<div class="grid">'+cards+'</div>';
+
   const q=$("q"); if(q) q.oninput=e=>{query=e.target.value.toLowerCase().trim();grid();};
   document.querySelectorAll("#filter [data-f]").forEach(b=>b.onclick=()=>{filter=b.dataset.f;grid();});
+  document.querySelectorAll("[data-cut]").forEach(el=>{
+    el.onclick=e=>e.stopPropagation();
+    el.onchange=e=>{e.stopPropagation();const x=parseInt(String(el.value).replace(/[^0-9]/g,""),10);saveCut(el.dataset.cut,isNaN(x)?0:x);};
+  });
   document.querySelectorAll("[data-open]").forEach(c=>c.onclick=()=>{view=c.dataset.open;render();});
 }
 
 function detail(n){
   const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel);
   const awaiting=VIDEOS.filter(v=>v.creator===n&&!v.paid);
-  const total=paid.reduce((a,v)=>a+(v.amount||0),0);
+  const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
+  const cut=Math.round(gross*cutOf(n)/100);
   const row=v=>{
     const i=VIDEOS.indexOf(v);
     const amount=v.amount!=null?v.amount:"";
@@ -208,7 +238,8 @@ function detail(n){
   };
   $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
     '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
-    '<div><div class="big">'+fmt(total)+'</div><div class="cap">'+n+' · '+fmtMl(sel)+'</div></div></div>'+
+    '<div><div class="big">'+fmt(gross)+'</div><div class="cap">'+n+' · '+fmtMl(sel)+' · gross received</div>'+
+    '<div class="splitline">NOOCAP cut <b>'+fmt(cut)+'</b> ('+cutOf(n)+'%) · creator net <span class="net">'+fmt(gross-cut)+'</span></div></div></div>'+
     '<div class="sec">Paid in '+fmtMl(sel)+' ('+paid.length+')</div>'+
     (paid.length?paid.map(row).join(""):'<div class="empty">No payments received this month.</div>')+
     '<div class="sec">Awaiting payment</div>'+
@@ -238,6 +269,19 @@ async function save(v, patch){
     if(!j.ok) throw new Error(j.error||"save failed");
     await load();
   }catch(e){ showBanner("Save failed: "+e.message); setStatus(false,"save failed"); }
+  finally{ busy=false; }
+}
+
+async function saveCut(creator, pct){
+  if(busy) return;
+  busy=true; setStatus(true,"saving…");
+  CUTS[creator]=pct;
+  try{
+    const r=await fetch("/api/cut-set",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({creator,pct})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"save failed");
+    await load();
+  }catch(e){ showBanner("Cut save failed: "+e.message); setStatus(false,"save failed"); }
   finally{ busy=false; }
 }
 
