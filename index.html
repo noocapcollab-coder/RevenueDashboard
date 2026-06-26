@@ -148,7 +148,7 @@ async function load(){
 
 function months(){
   const s=new Set([curMonth()]);
-  VIDEOS.forEach(v=>{ if(v.paid&&v.paidDate) s.add(mKey(v.paidDate)); });
+  VIDEOS.forEach(v=>{ if(v.date) s.add(mKey(v.date)); });
   return [...s].sort().reverse();
 }
 function chip(s){
@@ -164,16 +164,17 @@ function pass(v){
   if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
   return true;
 }
-function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel).reduce((a,v)=>a+(v.amount||0),0); }
+function inMonth(v){ return mKey(v.date)===sel; }
+function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid&&inMonth(v)).reduce((a,v)=>a+(v.amount||0),0); }
 function cutAmt(n){ return Math.round(grossOf(n)*cutOf(n)/100); }
 
 function kpis(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
   const gross=names.reduce((a,n)=>a+grossOf(n),0);
   const cut=names.reduce((a,n)=>a+cutAmt(n),0);
-  const pipe=VIDEOS.filter(v=>v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
-  const booked=VIDEOS.reduce((a,v)=>a+(v.amount||0),0);
-  const got=VIDEOS.filter(v=>v.paid).reduce((a,v)=>a+(v.amount||0),0);
+  const pipe=VIDEOS.filter(v=>inMonth(v)&&v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
+  const booked=VIDEOS.filter(v=>inMonth(v)).reduce((a,v)=>a+(v.amount||0),0);
+  const got=VIDEOS.filter(v=>inMonth(v)&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
   $("k-gross").textContent=fmt(gross);
   $("k-cut").textContent=fmt(cut);
   $("k-pipe").textContent=fmt(pipe);
@@ -192,7 +193,7 @@ function render(){
 function grid(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
   const vis={};
-  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v)); });
+  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&pass(v)); });
   const show=names.filter(n=>vis[n].length).sort((a,b)=>grossOf(b)-grossOf(a)||a.localeCompare(b));
 
   const cutTot=names.reduce((a,n)=>a+cutAmt(n),0);
@@ -228,8 +229,8 @@ function grid(){
 }
 
 function detail(n){
-  const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&mKey(v.paidDate)===sel);
-  const awaiting=VIDEOS.filter(v=>v.creator===n&&!v.paid);
+  const paid=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&v.paid);
+  const awaiting=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&!v.paid);
   const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
   const cut=Math.round(gross*cutOf(n)/100);
   const row=v=>{
