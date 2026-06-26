@@ -85,6 +85,7 @@
   .dt{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:11px;padding:4px 6px;border-radius:7px;outline:none;color-scheme:dark}
   .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
   .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
+  .banner.soft{background:#2a230f;border-color:#4a3a10;color:var(--amber)}
 </style>
 </head>
 <body>
@@ -123,7 +124,7 @@ const ini=n=>n.slice(0,2).toUpperCase();
 const cutOf=n=>Number(CUTS[n])||0;
 
 function setStatus(ok,msg){ $("dot").className="d"+(ok?"":" off"); $("status").textContent=msg; }
-function showBanner(msg){ const b=$("banner"); if(!msg){b.style.display="none";return;} b.textContent=msg; b.style.display="block"; }
+function showBanner(msg,soft){ const b=$("banner"); if(!msg){b.style.display="none";return;} b.textContent=msg; b.className="banner"+(soft?" soft":""); b.style.display="block"; }
 
 async function load(){
   try{
@@ -131,7 +132,8 @@ async function load(){
     const j=await r.json();
     if(!j.ok) throw new Error(j.error||"load failed");
     VIDEOS=j.videos||[]; CUTS=j.cuts||{};
-    showBanner("");
+    if(j.warnings&&j.warnings.length) showBanner("Some sources couldn't be read — "+j.warnings.join(" · "), true);
+    else showBanner("");
     setStatus(true,"updated "+new Date(j.generatedAt).toLocaleTimeString());
     render();
   }catch(e){
