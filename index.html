@@ -82,6 +82,8 @@
   .sugg{font-size:11px;color:var(--accent);background:transparent;border:1px dashed var(--accentd);padding:5px 8px;border-radius:7px;cursor:pointer}
   .pay{background:var(--card2);border:1px solid var(--line);color:var(--muted);font:inherit;font-size:11px;padding:5px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
   .pay.on{background:var(--accentd);border-color:var(--accentd);color:var(--accent)}
+  .del{background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:13px;line-height:1;padding:5px 9px;border-radius:7px;cursor:pointer}
+  .del:hover{color:var(--danger);border-color:#3b1d28}
   .dt{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:11px;padding:4px 6px;border-radius:7px;outline:none;color-scheme:dark}
   .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
   .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
@@ -238,10 +240,11 @@ function detail(n){
     const amount=v.amount!=null?v.amount:"";
     const sugg=(!v.amount&&v.suggested)?'<button class="sugg" data-act="sugg" data-i="'+i+'">use '+fmt(v.suggested)+'</button>':"";
     const recv=v.paid?'<input class="dt" type="date" data-act="date" data-i="'+i+'" value="'+(v.paidDate||"")+'"/>':"";
+    const del=v.revPageId?'<button class="del" data-act="del" data-i="'+i+'" title="Remove this revenue entry">✕</button>':"";
     return '<div class="v"><div class="m"><div class="t">'+esc(v.title)+'</div>'+
       '<div class="st">'+chip(v.status)+openLink(v)+'</div></div>'+
       '<div class="ab"><span>$</span><input inputmode="numeric" data-act="amt" data-i="'+i+'" value="'+amount+'" placeholder="0"/></div>'+sugg+
-      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+'</div>';
+      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+del+'</div>';
   };
   $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
     '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
@@ -258,6 +261,7 @@ function detail(n){
     if(a==="sugg")el.onclick=()=>save(v,{amount:v.suggested});
     if(a==="paid")el.onclick=()=>{const paid=!v.paid;save(v,{paid,paidDate:paid?(v.paidDate||today()):""});};
     if(a==="date")el.onchange=()=>save(v,{paid:true,paidDate:el.value});
+    if(a==="del")el.onclick=()=>delEntry(v);
   });
 }
 
@@ -276,6 +280,19 @@ async function save(v, patch){
     if(!j.ok) throw new Error(j.error||"save failed");
     await load();
   }catch(e){ showBanner("Save failed: "+e.message); setStatus(false,"save failed"); }
+  finally{ busy=false; }
+}
+
+async function delEntry(v){
+  if(busy||!v.revPageId) return;
+  if(!confirm('Remove the saved amount and paid status for "'+v.title+'"? The video stays on the board and you can re-enter it anytime.')) return;
+  busy=true; setStatus(true,"deleting…");
+  try{
+    const r=await fetch("/api/revenue-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({revPageId:v.revPageId})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"delete failed");
+    await load();
+  }catch(e){ showBanner("Delete failed: "+e.message); setStatus(false,"delete failed"); }
   finally{ busy=false; }
 }
 
