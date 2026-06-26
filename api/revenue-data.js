@@ -1,8 +1,5 @@
 // NOOCAP Sponsor Revenue — read endpoint (internal only)
-// Reads sponsor-tagged videos from each creator's board(s), merges the Sponsor Video
-// Revenue table, suggests amounts from the Brand Deals Pipeline, and applies per-creator
-// cut percentages. Resilient: a source that can't be read is skipped and reported in
-// `warnings` rather than failing the whole dashboard.
+// Resilient per-source reads + per-board diagnostics in `debug`.
 
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
@@ -83,31 +80,36 @@ module.exports = async function handler(req, res) {
     if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
 
     const warnings = [];
-    async function safeQuery(ds, label) {
-      try { return await queryAll(ds); }
-      catch (e) { warnings.push(`${label} couldn't be read (${String(e.message || e)})`); return []; }
-    }
+    const debug = [];
 
-    // Boards (resilient per board)
-    const tasks = [];
-    for (const [creator, dsList] of Object.entries(BOARDS)) {
-      for (const ds of dsList) {
-        tasks.push(
-          safeQuery(ds, creator).then((pages) =>
-            pages
-              .filter(isSponsor)
-              .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url }))
-              .filter((v) => v.status !== "Archive")
-          )
-        );
-      }
-    }
+    // Boards (resilient, with diagnostics)
+    const perBoard = await Promise.all(
+      Object.entries(BOARDS).flatMap(([creator, dsList]) =>
+        dsList.map(async (ds) => {
+          let pages = [];
+          try { pages = await queryAll(ds); }
+          catch (e) { warnings.push(`${creator} board couldn't be read (${String(e.message || e)})`); }
+          const items = pages
+            .filter(isSponsor)
+            .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id }))
+            .filter((v) => v.status !== "Archive");
+          return { creator, rows: pages.length, sponsors: items.length, items };
+        })
+      )
+    );
+    perBoard.forEach((b) => debug.push({ creator: b.creator, rows: b.rows, sponsors: b.sponsors }));
+
     const seen = new Set();
-    const videos = (await Promise.all(tasks)).flat().filter((v) => {
+    const videos = perBoard.flatMap((b) => b.items).filter((v) => {
       if (!v.link || seen.has(v.link)) return false;
       seen.add(v.link);
       return true;
     });
+
+    async function safeQuery(ds, label) {
+      try { return await queryAll(ds); }
+      catch (e) { warnings.push(`${label} couldn't be read (${String(e.message || e)})`); return []; }
+    }
 
     const revRows = (await safeQuery(REV_DS, "Revenue table")).map((pg) => ({
       revPageId: pg.id,
@@ -153,7 +155,7 @@ module.exports = async function handler(req, res) {
     merged.sort((a, b) => (a.creator === b.creator ? a.title.localeCompare(b.title) : a.creator.localeCompare(b.creator)));
 
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged, cuts, warnings });
+    res.status(200).json({ ok: true, generatedAt: new Date().toISOString(), videos: merged, cuts, warnings, debug });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e.message || e) });
   }
