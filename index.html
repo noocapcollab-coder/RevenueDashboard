@@ -166,7 +166,7 @@ function pass(v){
   if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
   return true;
 }
-function inMonth(v){ return mKey(v.date)===sel; }
+function inMonth(v){ return v.date ? mKey(v.date)===sel : sel===curMonth(); }
 function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid&&inMonth(v)).reduce((a,v)=>a+(v.amount||0),0); }
 function cutAmt(n){ return Math.round(grossOf(n)*cutOf(n)/100); }
 
