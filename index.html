@@ -7,7 +7,7 @@
 <style>
   :root{--bg:#0a0e17;--card:#141b2b;--card2:#0f1626;--line:#212c44;--text:#eef1f7;--muted:#8b94ab;
     --accent:#34d399;--accentd:#0e3a2c;--amber:#fbbf24;--amberd:#3a2e0f;--danger:#fb7185;
-    --indigo:#818cf8;--indigod:#1e2350;}
+    --indigo:#818cf8;--indigod:#1e2350;--cyan:#38bdf8;}
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -22,11 +22,11 @@
   .pills{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:2px;flex-wrap:wrap}
   .pills button{background:transparent;border:0;color:var(--muted);font:inherit;font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer}
   .pills button.on{background:var(--card);color:var(--text)}
-  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:16px 0}
   .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 13px}
   .kpi .l{font-size:11px;color:var(--muted);margin-bottom:7px}
   .kpi .v{font-size:21px;font-weight:600;letter-spacing:-.5px}
-  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)} .kpi .v.i{color:var(--indigo)}
+  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)} .kpi .v.i{color:var(--indigo)} .kpi .v.c{color:var(--cyan)}
   .noocap{background:linear-gradient(135deg,#161d34,#1a1838);border:1px solid var(--indigod);border-radius:14px;padding:15px 17px;margin-bottom:14px}
   .noocap .hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
   .badge{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
@@ -103,6 +103,7 @@
     <div class="kpi"><div class="l">gross received</div><div class="v g" id="k-gross">$0</div></div>
     <div class="kpi"><div class="l">NOOCAP cut</div><div class="v i" id="k-cut">$0</div></div>
     <div class="kpi"><div class="l">pipeline</div><div class="v a" id="k-pipe">$0</div></div>
+    <div class="kpi"><div class="l">pending deals</div><div class="v c" id="k-pend">$0</div></div>
     <div class="kpi"><div class="l">collected</div><div class="v g" id="k-rate">0%</div></div>
   </div>
 
@@ -177,9 +178,11 @@ function kpis(){
   const pipe=VIDEOS.filter(v=>inMonth(v)&&v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
   const booked=VIDEOS.filter(v=>inMonth(v)).reduce((a,v)=>a+(v.amount||0),0);
   const got=VIDEOS.filter(v=>inMonth(v)&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
+  const pend=VIDEOS.filter(v=>inMonth(v)&&!v.paid).reduce((a,v)=>a+(v.suggested||0),0);
   $("k-gross").textContent=fmt(gross);
   $("k-cut").textContent=fmt(cut);
   $("k-pipe").textContent=fmt(pipe);
+  $("k-pend").textContent=fmt(pend);
   $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
 }
 function monthsBar(){
