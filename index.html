@@ -178,7 +178,7 @@ function kpis(){
   const pipe=VIDEOS.filter(v=>inMonth(v)&&v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
   const booked=VIDEOS.filter(v=>inMonth(v)).reduce((a,v)=>a+(v.amount||0),0);
   const got=VIDEOS.filter(v=>inMonth(v)&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
-  const pend=VIDEOS.filter(v=>inMonth(v)&&!v.paid).reduce((a,v)=>a+(v.suggested||0),0);
+  const pend=VIDEOS.filter(v=>inMonth(v)&&!v.paid&&v.amount).reduce((a,v)=>a+v.amount,0);
   $("k-gross").textContent=fmt(gross);
   $("k-cut").textContent=fmt(cut);
   $("k-pipe").textContent=fmt(pipe);
