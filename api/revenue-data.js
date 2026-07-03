@@ -69,6 +69,15 @@ function isSponsor(page) {
   }
   return false;
 }
+function cycleOf(page) {
+  for (const [name, v] of Object.entries(props(page))) {
+    if (!/month/i.test(name)) continue;
+    if (v.type === "select" && v.select) return v.select.name.trim();
+    if (v.type === "status" && v.status) return v.status.name.trim();
+    if (v.type === "multi_select" && Array.isArray(v.multi_select) && v.multi_select[0]) return v.multi_select[0].name.trim();
+  }
+  return "";
+}
 function num(page, name) { const v = props(page)[name]; return v && v.type === "number" ? v.number : null; }
 function selectName(page, name) { const v = props(page)[name]; return v && v.type === "select" && v.select ? v.select.name : ""; }
 function checkbox(page, name) { const v = props(page)[name]; return !!(v && v.type === "checkbox" && v.checkbox); }
@@ -104,7 +113,7 @@ module.exports = async function handler(req, res) {
           catch (e) { warnings.push(`${creator} board couldn't be read (${String(e.message || e)})`); }
           const items = pages
             .filter(isSponsor)
-            .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id, date: videoDate(pg) }))
+            .map((pg) => ({ creator, title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id, date: videoDate(pg), cycle: cycleOf(pg) }))
             .filter((v) => v.status !== "Archive");
           return { creator, rows: pages.length, sponsors: items.length, items };
         })
@@ -159,6 +168,7 @@ module.exports = async function handler(req, res) {
         status: v.status,
         link: v.link,
         date: v.date,
+        cycle: v.cycle,
         revPageId: rev ? rev.revPageId : null,
         amount: rev ? rev.amount : null,
         paid: rev ? rev.paid : false,
