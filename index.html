@@ -88,6 +88,7 @@
   .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
   .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
   .banner.soft{background:#2a230f;border-color:#4a3a10;color:var(--amber)}
+  .pills.cyc{display:flex;flex-wrap:wrap;margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -119,7 +120,7 @@ const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"
 const $=id=>document.getElementById(id);
 const colors={Brad:"#60a5fa",Chris:"#fbbf24",Lindsay:"#f472b6",Duncan:"#a78bfa",Valeri:"#34d399",Emtech:"#fb7185",Dymtro:"#4ade80",Jonathan:"#f0abfc"};
 
-let VIDEOS=[], CUTS={}, sel="", view="grid", query="", filter="all", busy=false;
+let VIDEOS=[], CUTS={}, selCycle="", view="grid", query="", filter="all", busy=false;
 
 const fmtM=m=>m==="undated"?"Undated":/^\d{4}-\d{2}$/.test(m)?new Date(m+"-01").toLocaleString("en",{month:"short",year:"numeric"}):m;
 const fmtMl=m=>m==="undated"?"Undated":/^\d{4}-\d{2}$/.test(m)?new Date(m+"-01").toLocaleString("en",{month:"long",year:"numeric"}):m;
@@ -172,46 +173,47 @@ function pass(v){
   if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
   return true;
 }
-function inMonth(v){ return sel==="undated" ? !v.cycle : v.cycle===sel; }
-function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid&&inMonth(v)).reduce((a,v)=>a+(v.amount||0),0); }
+function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid).reduce((a,v)=>a+(v.amount||0),0); }
 function cutAmt(n){ return Math.round(grossOf(n)*cutOf(n)/100); }
+function creatorCycles(n){
+  const set=new Set(); let u=false;
+  VIDEOS.forEach(v=>{ if(v.creator!==n) return; if(v.cycle) set.add(v.cycle); else u=true; });
+  const list=[...set].sort((a,b)=>cycleRank(b)-cycleRank(a));
+  if(u) list.push("undated");
+  return list;
+}
 
 function kpis(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
   const gross=names.reduce((a,n)=>a+grossOf(n),0);
   const cut=names.reduce((a,n)=>a+cutAmt(n),0);
-  const pipe=VIDEOS.filter(v=>inMonth(v)&&v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
-  const booked=VIDEOS.filter(v=>inMonth(v)).reduce((a,v)=>a+(v.amount||0),0);
-  const got=VIDEOS.filter(v=>inMonth(v)&&v.paid).reduce((a,v)=>a+(v.amount||0),0);
-  const pend=VIDEOS.filter(v=>inMonth(v)&&!v.paid&&v.amount).reduce((a,v)=>a+v.amount,0);
+  const pipe=VIDEOS.filter(v=>v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
+  const booked=VIDEOS.reduce((a,v)=>a+(v.amount||0),0);
+  const got=VIDEOS.filter(v=>v.paid).reduce((a,v)=>a+(v.amount||0),0);
   $("k-gross").textContent=fmt(gross);
   $("k-cut").textContent=fmt(cut);
   $("k-pipe").textContent=fmt(pipe);
-  $("k-pend").textContent=fmt(pend);
+  $("k-pend").textContent=fmt(pipe);
   $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
 }
-function monthsBar(){
-  $("months").innerHTML=months().map(m=>'<button data-m="'+m+'" class="'+(m===sel?"on":"")+'">'+fmtM(m)+'</button>').join("");
-  document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{sel=b.dataset.m;render();});
-}
 function render(){
-  const ms=months(); if(!ms.includes(sel)) sel=ms[0];
-  monthsBar(); kpis();
+  $("months").innerHTML="";
+  kpis();
   view==="grid"?grid():detail(view);
 }
 
 function grid(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
   const vis={};
-  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&pass(v)); });
+  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v)); });
   const show=names.filter(n=>vis[n].length).sort((a,b)=>grossOf(b)-grossOf(a)||a.localeCompare(b));
 
   const cutTot=names.reduce((a,n)=>a+cutAmt(n),0);
   const earners=names.filter(n=>cutAmt(n)>0).sort((a,b)=>cutAmt(b)-cutAmt(a));
   const noocap='<div class="noocap"><div class="hd">'+
     '<div class="badge"><span class="b">N</span> NOOCAP cut</div>'+
-    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap">'+fmtMl(sel)+' · agency take</div></div></div>'+
-    '<div class="split">'+(earners.length?earners.map(n=>'<div class="s"><b>'+fmt(cutAmt(n))+'</b> '+n+'</div>').join(""):'<div class="s">No collected revenue yet this month.</div>')+'</div></div>';
+    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap">agency take · all cycles</div></div></div>'+
+    '<div class="split">'+(earners.length?earners.map(n=>'<div class="s"><b>'+fmt(cutAmt(n))+'</b> '+n+'</div>').join(""):'<div class="s">No collected revenue yet.</div>')+'</div></div>';
 
   const cards=show.length?show.map(n=>{
     return '<div class="card" data-open="'+esc(n)+'"><div class="ch">'+
@@ -239,8 +241,12 @@ function grid(){
 }
 
 function detail(n){
-  const paid=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&v.paid);
-  const awaiting=VIDEOS.filter(v=>v.creator===n&&inMonth(v)&&!v.paid);
+  const cyc=creatorCycles(n);
+  if(!cyc.includes(selCycle)) selCycle=cyc[0]||"";
+  const inC=v=> selCycle==="undated" ? !v.cycle : v.cycle===selCycle;
+  const clabel=selCycle==="undated"?"Undated":(selCycle||"—");
+  const paid=VIDEOS.filter(v=>v.creator===n&&inC(v)&&v.paid);
+  const awaiting=VIDEOS.filter(v=>v.creator===n&&inC(v)&&!v.paid);
   const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
   const cut=Math.round(gross*cutOf(n)/100);
   const row=v=>{
@@ -254,15 +260,18 @@ function detail(n){
       '<div class="ab"><span>$</span><input inputmode="numeric" data-act="amt" data-i="'+i+'" value="'+amount+'" placeholder="0"/></div>'+sugg+
       '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+del+'</div>';
   };
+  const pills=cyc.length?'<div class="pills cyc">'+cyc.map(c=>'<button data-cyc="'+esc(c)+'" class="'+(c===selCycle?"on":"")+'">'+(c==="undated"?"Undated":esc(c))+'</button>').join("")+'</div>':"";
   $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
+    pills+
     '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
-    '<div><div class="big">'+fmt(gross)+'</div><div class="cap">'+n+' · '+fmtMl(sel)+' · gross received</div>'+
+    '<div><div class="big">'+fmt(gross)+'</div><div class="cap">'+n+' · '+esc(clabel)+' · gross received</div>'+
     '<div class="splitline">NOOCAP cut <b>'+fmt(cut)+'</b> ('+cutOf(n)+'%) · creator net <span class="net">'+fmt(gross-cut)+'</span></div></div></div>'+
-    '<div class="sec">Paid in '+fmtMl(sel)+' ('+paid.length+')</div>'+
-    (paid.length?paid.map(row).join(""):'<div class="empty">No payments received this month.</div>')+
+    '<div class="sec">Paid · '+esc(clabel)+' ('+paid.length+')</div>'+
+    (paid.length?paid.map(row).join(""):'<div class="empty">No payments received in this cycle.</div>')+
     '<div class="sec">Awaiting payment</div>'+
     (awaiting.length?awaiting.map(row).join(""):'<div class="empty">Nothing outstanding.</div>');
   $("back").onclick=()=>{view="grid";render();};
+  document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;detail(n);});
   document.querySelectorAll("[data-act]").forEach(el=>{
     const i=+el.dataset.i,a=el.dataset.act,v=VIDEOS[i];
     if(a==="amt")el.onchange=()=>{const x=parseInt(String(el.value).replace(/[^0-9]/g,""),10);save(v,{amount:isNaN(x)?null:x});};
