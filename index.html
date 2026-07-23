@@ -3,179 +3,335 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NOOCAP · Brand Deals</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<title>NOOCAP — Sponsor Revenue</title>
 <style>
-  :root{
-    --poll-ms:20000;
-    --ink:#0C0F14; --panel:#141922; --panel-2:#1B212C; --raised:#212935;
-    --line:#232A36; --line-2:#2D3645;
-    --fg:#E7ECF3; --fg-dim:#A4ADBC; --fg-mute:#727C8C;
-    --brand:#F5B544; --data:#5BD0C7;
-    --red:#F4685E; --green:#5FC97B; --pink:#E6709E; --purple:#B98AE6;
-    --r:16px; --r-sm:10px; --mono:"JetBrains Mono",ui-monospace,monospace;
-  }
-  *{box-sizing:border-box} html,body{margin:0;padding:0}
-  body{
-    background:
-      radial-gradient(1100px 560px at 82% -12%, rgba(245,181,68,.07), transparent 58%),
-      radial-gradient(820px 460px at -8% 108%, rgba(91,208,199,.06), transparent 55%),
-      var(--ink);
-    color:var(--fg); font-family:"Inter",system-ui,sans-serif; font-size:14px; line-height:1.5;
-    -webkit-font-smoothing:antialiased; min-height:100vh;
-  }
-  a{color:var(--data)}
-  .wrap{max-width:920px; margin:0 auto; padding:30px 24px 60px}
-  .head{display:flex; align-items:center; gap:13px; margin-bottom:8px}
-  .diamond{width:13px;height:13px;background:var(--brand);transform:rotate(45deg);border-radius:2px;box-shadow:0 0 14px rgba(245,181,68,.55)}
-  .head b{font-family:"Space Grotesk",sans-serif;font-weight:700;letter-spacing:.14em;font-size:15px}
-  .live{margin-left:auto;display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;color:var(--fg-dim)}
-  .dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
-  .live.syncing .dot{background:var(--brand)}
-  .live.stale .dot{background:var(--red)}
-
-  .hero{font-family:"Space Grotesk",sans-serif; font-weight:700; font-size:34px; letter-spacing:-.02em; margin:6px 0 2px}
-  .hero .nm{color:var(--brand)}
-  .sub{color:var(--fg-mute); font-size:13.5px; margin-bottom:22px}
-
-  .cycles{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:22px}
-  .cycles button{font-family:var(--mono); font-size:11.5px; color:var(--fg-dim); background:var(--panel);
-    border:1px solid var(--line); border-radius:99px; padding:6px 13px; cursor:pointer; transition:.15s}
-  .cycles button:hover{border-color:var(--line-2)}
-  .cycles button.on{color:var(--ink); background:var(--brand); border-color:var(--brand); font-weight:600}
-
-  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:26px}
-  .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:17px 18px}
-  .stat .n{font-family:var(--mono); font-weight:700; font-size:28px; letter-spacing:-.02em; line-height:1}
-  .stat .l{color:var(--fg-dim); font-size:12px; margin-top:8px}
-  .stat.net{background:linear-gradient(180deg,rgba(95,201,123,.10),rgba(95,201,123,.02)); border-color:rgba(95,201,123,.3)}
-
-  .group + .group{margin-top:26px}
-  .group-label{font-family:"Space Grotesk",sans-serif; font-weight:600; font-size:11px; letter-spacing:.2em;
-    text-transform:uppercase; color:var(--fg-mute); display:flex; align-items:center; gap:10px; margin:0 0 14px}
-  .group-label .c{font-family:var(--mono); color:var(--data); font-size:11px}
-  .group-label::after{content:"";flex:1;height:1px;background:var(--line)}
-
-  .deal{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r); padding:15px 18px; margin-bottom:11px}
-  .deal .ttl{flex:1; font-weight:600; font-size:14.5px; line-height:1.35}
-  .deal .meta{font-family:var(--mono); font-size:11px; color:var(--fg-mute); margin-top:3px}
-  .amt{font-family:var(--mono); font-weight:700; font-size:16px; letter-spacing:-.01em; white-space:nowrap}
-  .pill{font-size:10px; font-weight:600; padding:3px 9px; border-radius:99px; white-space:nowrap; letter-spacing:.03em}
-  .pill.paid{color:var(--green); background:rgba(95,201,123,.14)}
-  .pill.due{color:var(--brand); background:rgba(245,181,68,.12)}
-
-  .gate{text-align:center; padding:80px 20px; color:var(--fg-mute); font-family:var(--mono); font-size:13px}
-  .foot{margin-top:40px; padding-top:18px; border-top:1px solid var(--line); color:var(--fg-mute);
-    font-family:var(--mono); font-size:11px}
-  @media(max-width:560px){ .hero{font-size:26px} .stats{grid-template-columns:1fr} }
-  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  :root{--bg:#0a0e17;--card:#141b2b;--card2:#0f1626;--line:#212c44;--text:#eef1f7;--muted:#8b94ab;
+    --accent:#34d399;--accentd:#0e3a2c;--amber:#fbbf24;--amberd:#3a2e0f;--danger:#fb7185;
+    --indigo:#818cf8;--indigod:#1e2350;--cyan:#38bdf8;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:20px;max-width:1040px;margin:0 auto}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600}
+  .brand .b{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#04231a;
+    display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700}
+  .live{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px}
+  .live .d{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+  .live .d.off{background:var(--danger)}
+  .pills{display:inline-flex;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:2px;flex-wrap:wrap}
+  .pills button{background:transparent;border:0;color:var(--muted);font:inherit;font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer}
+  .pills button.on{background:var(--card);color:var(--text)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 13px}
+  .kpi .l{font-size:11px;color:var(--muted);margin-bottom:7px}
+  .kpi .v{font-size:21px;font-weight:600;letter-spacing:-.5px}
+  .kpi .v.g{color:var(--accent)} .kpi .v.a{color:var(--amber)} .kpi .v.i{color:var(--indigo)} .kpi .v.c{color:var(--cyan)}
+  .noocap{background:linear-gradient(135deg,#161d34,#1a1838);border:1px solid var(--indigod);border-radius:14px;padding:15px 17px;margin-bottom:14px}
+  .noocap .hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .badge{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+  .badge .b{width:24px;height:24px;border-radius:7px;background:var(--indigo);color:#0a0e17;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+  .noocap .big{font-size:26px;font-weight:600;color:var(--indigo);letter-spacing:-.8px;text-align:right}
+  .noocap .cap{font-size:11px;color:var(--muted);text-align:right}
+  .noocap .split{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+  .noocap .split .s{font-size:12px;color:var(--muted)}
+  .noocap .split .s b{color:var(--text);font-weight:600}
+  .tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .search{flex:1;min-width:150px;display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+  .search input{flex:1;background:transparent;border:0;color:var(--text);font:inherit;font-size:13px;outline:none}
+  .search i{color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:border-color .15s,transform .1s}
+  .card:hover{border-color:#36507f;transform:translateY(-1px)}
+  .ch{display:flex;align-items:center;gap:10px}
+  .av{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#0a0e17}
+  .cn{font-size:14px;font-weight:600;line-height:1.1}
+  .cmeta{font-size:11px;color:var(--muted);margin-top:2px}
+  .chev{margin-left:auto;color:var(--muted)}
+  .crecv{margin:13px 0 0;display:flex;align-items:baseline;gap:7px}
+  .crecv .v{font-size:23px;font-weight:600;color:var(--accent);letter-spacing:-.5px}
+  .crecv .l{font-size:11px;color:var(--muted)}
+  .cutrow{display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+  .cutlbl{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .cutlbl input{width:42px;text-align:right;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:3px 5px;border-radius:6px;outline:none}
+  .cutlbl input:focus{border-color:var(--indigo)}
+  .cutval{font-size:15px;font-weight:600;color:var(--indigo)}
+  .back{display:inline-flex;align-items:center;gap:6px;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:7px 12px;border-radius:9px;cursor:pointer;margin-bottom:13px}
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px}
+  .hero .av{width:46px;height:46px;border-radius:12px;font-size:16px}
+  .hero .big{font-size:30px;font-weight:600;color:var(--accent);letter-spacing:-1px;line-height:1}
+  .hero .cap{font-size:12px;color:var(--muted);margin-top:4px}
+  .hero .splitline{font-size:11px;color:var(--muted);margin-top:7px}
+  .hero .splitline b{color:var(--indigo);font-weight:600}
+  .hero .splitline .net{color:var(--text)}
+  .sec{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:14px 0 8px}
+  .v{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+  .v .m{flex:1;min-width:120px}
+  .v .t{font-size:13px;font-weight:500}
+  .v .st{margin-top:4px;display:flex;gap:6px;align-items:center}
+  .chip{font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid var(--line);color:var(--muted)}
+  .chip.red{color:#fda4af;border-color:#3b1d28}
+  .chip.amber{color:var(--amber);border-color:var(--amberd)}
+  .chip.green{color:var(--accent);border-color:var(--accentd)}
+  .lnk{color:var(--muted);text-decoration:none}
+  .lnk:hover{color:var(--accent)}
+  .ab{display:flex;align-items:center;gap:2px}
+  .ab span{color:var(--muted);font-size:13px}
+  .ab input{width:64px;text-align:right;background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:13px;padding:5px 7px;border-radius:7px;outline:none}
+  .ab input:focus{border-color:var(--accent)}
+  .sugg{font-size:11px;color:var(--accent);background:transparent;border:1px dashed var(--accentd);padding:5px 8px;border-radius:7px;cursor:pointer}
+  .pay{background:var(--card2);border:1px solid var(--line);color:var(--muted);font:inherit;font-size:11px;padding:5px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .pay.on{background:var(--accentd);border-color:var(--accentd);color:var(--accent)}
+  .del{background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:13px;line-height:1;padding:5px 9px;border-radius:7px;cursor:pointer}
+  .del:hover{color:var(--danger);border-color:#3b1d28}
+  .dt{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:11px;padding:4px 6px;border-radius:7px;outline:none;color-scheme:dark}
+  .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
+  .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
+  .banner.soft{background:#2a230f;border-color:#4a3a10;color:var(--amber)}
+  .pills.cyc{display:flex;flex-wrap:wrap;margin-bottom:12px}
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="head">
-      <div class="diamond"></div><b>NOOCAP</b>
-      <div class="live" id="live"><div class="dot"></div><span id="ago">live</span></div>
+  <div class="top">
+    <div class="brand"><span class="b"><i class="ti ti-cash" aria-hidden="true"></i></span> Sponsor revenue</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="live"><span class="d" id="dot"></span> <span id="status">Loading…</span></span>
+      <div class="pills" id="months"></div>
     </div>
-    <div id="content"><div class="gate">Loading your brand deals…</div></div>
-    <div class="foot">◆ This is your live brand-deal tracker — bookmark it. It updates on its own.</div>
   </div>
 
+  <div class="kpis">
+    <div class="kpi"><div class="l">gross received</div><div class="v g" id="k-gross">$0</div></div>
+    <div class="kpi"><div class="l">NOOCAP cut</div><div class="v i" id="k-cut">$0</div></div>
+    <div class="kpi"><div class="l">pipeline</div><div class="v a" id="k-pipe">$0</div></div>
+    <div class="kpi"><div class="l">pending deals</div><div class="v c" id="k-pend">$0</div></div>
+    <div class="kpi"><div class="l">collected</div><div class="v g" id="k-rate">0%</div></div>
+  </div>
+
+  <div class="banner" id="banner"></div>
+  <div id="view"></div>
+
 <script>
-const POLL=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--poll-ms'))||20000;
-const key=new URLSearchParams(location.search).get('k')||new URLSearchParams(location.search).get('key');
-const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
-const $=id=>document.getElementById(id);
 const fmt=n=>"$"+Math.round(Number(n)||0).toLocaleString();
-const fmtDate=iso=>iso?new Date(iso).toLocaleDateString("en-US",{month:"short",day:"numeric"}):null;
+const mKey=s=>(s||"").slice(0,7);
+const curMonth=()=>new Date().toISOString().slice(0,7);
+const today=()=>new Date().toISOString().slice(0,10);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $=id=>document.getElementById(id);
+const colors={Brad:"#60a5fa",Chris:"#fbbf24",Lindsay:"#f472b6",Duncan:"#a78bfa",Valeri:"#34d399",Emtech:"#fb7185",Dymtro:"#4ade80",Jonathan:"#f0abfc"};
+
+let VIDEOS=[], CUTS={}, selCycle="", view="grid", query="", filter="all", busy=false;
+
+const fmtM=m=>m==="undated"?"Undated":/^\d{4}-\d{2}$/.test(m)?new Date(m+"-01").toLocaleString("en",{month:"short",year:"numeric"}):m;
+const fmtMl=m=>m==="undated"?"Undated":/^\d{4}-\d{2}$/.test(m)?new Date(m+"-01").toLocaleString("en",{month:"long",year:"numeric"}):m;
 const MIDX={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
-const cycleRank=c=>c==="undated"?-1:(MIDX[String(c).slice(0,3).toUpperCase()]||0);
+function cycleRank(c){ if(c==="undated") return -1; return MIDX[String(c).slice(0,3).toUpperCase()]||0; }
+const ini=n=>n.slice(0,2).toUpperCase();
+const cutOf=n=>Number(CUTS[n])||0;
 
-let DATA=null, selCycle="";
+function setStatus(ok,msg){ $("dot").className="d"+(ok?"":" off"); $("status").textContent=msg; }
+function showBanner(msg,soft){ const b=$("banner"); if(!msg){b.style.display="none";return;} b.textContent=msg; b.className="banner"+(soft?" soft":""); b.style.display="block"; }
 
-function cyclesOf(vids){
+async function load(){
+  try{
+    const r=await fetch("/api/revenue-data",{cache:"no-store"});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"load failed");
+    VIDEOS=j.videos||[]; CUTS=j.cuts||{};
+    let notice=(j.warnings&&j.warnings.length)?j.warnings.join(" · "):"";
+    if(!VIDEOS.length&&j.debug&&j.debug.length){
+      const d=j.debug.map(x=>x.creator+": "+x.rows+"r/"+x.sponsors+"s").join("  ");
+      notice=(notice?notice+" — ":"")+"no videos loaded · "+d;
+    }
+    if(notice) showBanner(notice,true); else showBanner("");
+    setStatus(true,"updated "+new Date(j.generatedAt).toLocaleTimeString());
+    render();
+  }catch(e){
+    setStatus(false,"offline — retrying");
+    showBanner("Could not reach Notion: "+e.message);
+  }
+}
+
+function months(){
+  const set=new Set();
+  let hasUndated=false;
+  VIDEOS.forEach(v=>{ if(v.cycle) set.add(v.cycle); else hasUndated=true; });
+  const list=[...set].sort((a,b)=>cycleRank(b)-cycleRank(a));
+  if(hasUndated) list.push("undated");
+  return list;
+}
+function chip(s){
+  const x=(s||"").toLowerCase(); let k="";
+  if(x.includes("change"))k="red"; else if(x.includes("edit")||x.includes("film"))k="amber";
+  else if(x.includes("ready")||x.includes("post"))k="green";
+  return '<span class="chip '+k+'">'+(s||"—")+'</span>';
+}
+function openLink(v){ return v.link?' · <a class="lnk" href="'+v.link+'" target="_blank" rel="noopener">open</a>':""; }
+function pass(v){
+  if(filter==="paid"&&!v.paid)return false;
+  if(filter==="unpaid"&&v.paid)return false;
+  if(query&&!((v.title+" "+v.creator).toLowerCase().includes(query)))return false;
+  return true;
+}
+function grossOf(n){ return VIDEOS.filter(v=>v.creator===n&&v.paid).reduce((a,v)=>a+(v.amount||0),0); }
+function cutAmt(n){ return Math.round(grossOf(n)*cutOf(n)/100); }
+function creatorCycles(n){
   const set=new Set(); let u=false;
-  vids.forEach(v=>{ if(v.cycle) set.add(v.cycle); else u=true; });
+  VIDEOS.forEach(v=>{ if(v.creator!==n) return; if(v.cycle) set.add(v.cycle); else u=true; });
   const list=[...set].sort((a,b)=>cycleRank(b)-cycleRank(a));
   if(u) list.push("undated");
   return list;
 }
 
+function kpis(){
+  const names=[...new Set(VIDEOS.map(v=>v.creator))];
+  const gross=names.reduce((a,n)=>a+grossOf(n),0);
+  const cut=names.reduce((a,n)=>a+cutAmt(n),0);
+  const pipe=VIDEOS.filter(v=>v.amount&&!v.paid).reduce((a,v)=>a+v.amount,0);
+  const booked=VIDEOS.reduce((a,v)=>a+(v.amount||0),0);
+  const got=VIDEOS.filter(v=>v.paid).reduce((a,v)=>a+(v.amount||0),0);
+  $("k-gross").textContent=fmt(gross);
+  $("k-cut").textContent=fmt(cut);
+  $("k-pipe").textContent=fmt(pipe);
+  $("k-pend").textContent=fmt(pipe);
+  $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
+}
 function render(){
-  const d=DATA; if(!d){return;}
-  const vids=d.videos||[];
-  const cyc=cyclesOf(vids);
+  $("months").innerHTML="";
+  kpis();
+  view==="grid"?grid():detail(view);
+}
+
+function grid(){
+  const names=[...new Set(VIDEOS.map(v=>v.creator))];
+  const vis={};
+  names.forEach(n=>{ vis[n]=VIDEOS.filter(v=>v.creator===n&&pass(v)); });
+  const show=names.filter(n=>vis[n].length).sort((a,b)=>grossOf(b)-grossOf(a)||a.localeCompare(b));
+
+  const cutTot=names.reduce((a,n)=>a+cutAmt(n),0);
+  const earners=names.filter(n=>cutAmt(n)>0).sort((a,b)=>cutAmt(b)-cutAmt(a));
+  const noocap='<div class="noocap"><div class="hd">'+
+    '<div class="badge"><span class="b">N</span> NOOCAP cut</div>'+
+    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap">agency take · all cycles</div></div></div>'+
+    '<div class="split">'+(earners.length?earners.map(n=>'<div class="s"><b>'+fmt(cutAmt(n))+'</b> '+n+'</div>').join(""):'<div class="s">No collected revenue yet.</div>')+'</div></div>';
+
+  const cards=show.length?show.map(n=>{
+    return '<div class="card" data-open="'+esc(n)+'"><div class="ch">'+
+      '<div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
+      '<div><div class="cn">'+n+'</div><div class="cmeta">'+vis[n].length+' sponsor video'+(vis[n].length>1?"s":"")+'</div></div>'+
+      '<span class="chev"><i class="ti ti-chevron-right" aria-hidden="true"></i></span></div>'+
+      '<div class="crecv"><span class="v">'+fmt(grossOf(n))+'</span><span class="l">gross received</span></div>'+
+      '<div class="cutrow"><div class="cutlbl">NOOCAP cut <input inputmode="numeric" data-cut="'+esc(n)+'" value="'+cutOf(n)+'" />%</div>'+
+      '<div class="cutval">'+fmt(cutAmt(n))+'</div></div></div>';
+  }).join(""):'<div class="empty" style="border:0">No sponsor videos match.</div>';
+
+  $("view").innerHTML=noocap+
+    '<div class="tools"><div class="search"><i class="ti ti-search" aria-hidden="true"></i>'+
+    '<input id="q" placeholder="Search creator or video…" value="'+esc(query)+'" /></div>'+
+    '<div class="pills" id="filter">'+["all","unpaid","paid"].map(f=>'<button data-f="'+f+'" class="'+(f===filter?"on":"")+'">'+f[0].toUpperCase()+f.slice(1)+'</button>').join("")+'</div></div>'+
+    '<div class="grid">'+cards+'</div>';
+
+  const q=$("q"); if(q) q.oninput=e=>{query=e.target.value.toLowerCase().trim();grid();};
+  document.querySelectorAll("#filter [data-f]").forEach(b=>b.onclick=()=>{filter=b.dataset.f;grid();});
+  document.querySelectorAll("[data-cut]").forEach(el=>{
+    el.onclick=e=>e.stopPropagation();
+    el.onchange=e=>{e.stopPropagation();const x=parseInt(String(el.value).replace(/[^0-9]/g,""),10);saveCut(el.dataset.cut,isNaN(x)?0:x);};
+  });
+  document.querySelectorAll("[data-open]").forEach(c=>c.onclick=()=>{view=c.dataset.open;render();});
+}
+
+function detail(n){
+  const cyc=creatorCycles(n);
   if(!cyc.includes(selCycle)) selCycle=cyc[0]||"";
-  const clabel=selCycle==="undated"?"Undated":(selCycle||"—");
   const inC=v=> selCycle==="undated" ? !v.cycle : v.cycle===selCycle;
-
-  const mine=vids.filter(inC);
-  const paid=mine.filter(v=>v.paid);
-  const awaiting=mine.filter(v=>!v.paid);
+  const clabel=selCycle==="undated"?"Undated":(selCycle||"—");
+  const paid=VIDEOS.filter(v=>v.creator===n&&inC(v)&&v.paid);
+  const awaiting=VIDEOS.filter(v=>v.creator===n&&inC(v)&&!v.paid);
   const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
-  const pct=Number(d.cutPct)||0;
-  const cut=Math.round(gross*pct/100);
-  const net=gross-cut;
-
-  let html="";
-  html+=`<div class="hero">Hey <span class="nm">${esc(d.creator)}</span> 👋</div>`;
-  html+=`<div class="sub">Every brand deal you've got with NOOCAP, and exactly what you've been paid — updated live.</div>`;
-
-  if(cyc.length){
-    html+=`<div class="cycles">`+cyc.map(c=>`<button data-cyc="${esc(c)}" class="${c===selCycle?'on':''}">${c==='undated'?'Undated':esc(c)}</button>`).join("")+`</div>`;
-  }
-
-  html+=`<div class="stats">
-    <div class="stat"><div class="n" style="color:var(--green)">${fmt(gross)}</div><div class="l">Gross received · ${esc(clabel)}</div></div>
-    <div class="stat"><div class="n" style="color:var(--purple)">${fmt(cut)}</div><div class="l">NOOCAP cut · ${pct}%</div></div>
-    <div class="stat net"><div class="n" style="color:var(--green)">${fmt(net)}</div><div class="l">Your net take</div></div>
-  </div>`;
-
-  if(paid.length){
-    html+=`<div class="group"><div class="group-label">Paid <span class="c">${paid.length}</span></div>`;
-    html+=paid.map(v=>`<div class="deal"><div class="ttl">${esc(v.title)}<div class="meta">${v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'}</div></div>
-      <span class="pill paid">Paid</span><span class="amt" style="color:var(--green)">${fmt(v.amount)}</span></div>`).join("")+`</div>`;
-  }
-
-  if(awaiting.length){
-    html+=`<div class="group"><div class="group-label">Awaiting payment <span class="c">${awaiting.length}</span></div>`;
-    html+=awaiting.map(v=>`<div class="deal"><div class="ttl">${esc(v.title)}<div class="meta">${esc(v.status||'in progress')}</div></div>
-      <span class="pill due">Unpaid</span><span class="amt" style="color:${v.amount?'var(--fg)':'var(--fg-mute)'}">${v.amount?fmt(v.amount):'—'}</span></div>`).join("")+`</div>`;
-  }
-
-  if(!mine.length){
-    html+=`<div class="gate">No brand deals in this cycle yet — they'll show up here as they come in.</div>`;
-  }
-
-  $("content").innerHTML=html;
-  document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;render();});
+  const cut=Math.round(gross*cutOf(n)/100);
+  const row=v=>{
+    const i=VIDEOS.indexOf(v);
+    const amount=v.amount!=null?v.amount:"";
+    const sugg=(!v.amount&&v.suggested)?'<button class="sugg" data-act="sugg" data-i="'+i+'">use '+fmt(v.suggested)+'</button>':"";
+    const recv=v.paid?'<input class="dt" type="date" data-act="date" data-i="'+i+'" value="'+(v.paidDate||"")+'"/>':"";
+    const del=v.revPageId?'<button class="del" data-act="del" data-i="'+i+'" title="Remove this revenue entry">✕</button>':"";
+    return '<div class="v"><div class="m"><div class="t">'+esc(v.title)+'</div>'+
+      '<div class="st">'+chip(v.status)+openLink(v)+'</div></div>'+
+      '<div class="ab"><span>$</span><input inputmode="numeric" data-act="amt" data-i="'+i+'" value="'+amount+'" placeholder="0"/></div>'+sugg+
+      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+del+'</div>';
+  };
+  const pills=cyc.length?'<div class="pills cyc">'+cyc.map(c=>'<button data-cyc="'+esc(c)+'" class="'+(c===selCycle?"on":"")+'">'+(c==="undated"?"Undated":esc(c))+'</button>').join("")+'</div>':"";
+  $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
+    pills+
+    '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
+    '<div><div class="big">'+fmt(gross)+'</div><div class="cap">'+n+' · '+esc(clabel)+' · gross received</div>'+
+    '<div class="splitline">NOOCAP cut <b>'+fmt(cut)+'</b> ('+cutOf(n)+'%) · creator net <span class="net">'+fmt(gross-cut)+'</span></div></div></div>'+
+    '<div class="sec">Paid · '+esc(clabel)+' ('+paid.length+')</div>'+
+    (paid.length?paid.map(row).join(""):'<div class="empty">No payments received in this cycle.</div>')+
+    '<div class="sec">Awaiting payment</div>'+
+    (awaiting.length?awaiting.map(row).join(""):'<div class="empty">Nothing outstanding.</div>');
+  $("back").onclick=()=>{view="grid";render();};
+  document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;detail(n);});
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    const i=+el.dataset.i,a=el.dataset.act,v=VIDEOS[i];
+    if(a==="amt")el.onchange=()=>{const x=parseInt(String(el.value).replace(/[^0-9]/g,""),10);save(v,{amount:isNaN(x)?null:x});};
+    if(a==="sugg")el.onclick=()=>save(v,{amount:v.suggested});
+    if(a==="paid")el.onclick=()=>{const paid=!v.paid;save(v,{paid,paidDate:paid?(v.paidDate||today()):""});};
+    if(a==="date")el.onchange=()=>save(v,{paid:true,paidDate:el.value});
+    if(a==="del")el.onclick=()=>delEntry(v);
+  });
 }
 
-let lastOk=null;
-function setLive(s){ $("live").className="live "+s; }
-function tickAgo(){ if(!lastOk)return; const s=Math.round((Date.now()-lastOk)/1000);
-  $("ago").textContent=s<60?"live · "+s+"s":"live · "+Math.floor(s/60)+"m"; }
-
-async function sync(){
-  if(!key){ $("content").innerHTML=`<div class="gate">This link is missing its access key. Check with NOOCAP.</div>`; return; }
-  setLive("syncing");
+async function save(v, patch){
+  if(busy) return;
+  busy=true; setStatus(true,"saving…");
+  const payload={
+    revPageId:v.revPageId||undefined, link:v.link, title:v.title, creator:v.creator,
+    amount:("amount" in patch)?patch.amount:v.amount,
+    paid:("paid" in patch)?patch.paid:v.paid,
+    paidDate:("paidDate" in patch)?patch.paidDate:v.paidDate,
+  };
   try{
-    const res=await fetch(`/api/client-revenue?k=${encodeURIComponent(key)}`,{cache:"no-store"});
-    const data=await res.json();
-    if(!res.ok||!data.ok) throw new Error(data.error||"unavailable");
-    DATA=data; render();
-    lastOk=Date.now(); setLive(""); tickAgo();
-  }catch(e){
-    setLive("stale");
-    if(!DATA) $("content").innerHTML=`<div class="gate">${esc(String(e.message||e))}</div>`;
-  }
+    const r=await fetch("/api/revenue-set",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"save failed");
+    await load();
+  }catch(e){ showBanner("Save failed: "+e.message); setStatus(false,"save failed"); }
+  finally{ busy=false; }
 }
-setInterval(tickAgo,1000);
-setInterval(sync,POLL);
-sync();
+
+async function delEntry(v){
+  if(busy||!v.revPageId) return;
+  if(!confirm('Remove the saved amount and paid status for "'+v.title+'"? The video stays on the board and you can re-enter it anytime.')) return;
+  busy=true; setStatus(true,"deleting…");
+  try{
+    const r=await fetch("/api/revenue-delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({revPageId:v.revPageId})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"delete failed");
+    await load();
+  }catch(e){ showBanner("Delete failed: "+e.message); setStatus(false,"delete failed"); }
+  finally{ busy=false; }
+}
+
+async function saveCut(creator, pct){
+  if(busy) return;
+  busy=true; setStatus(true,"saving…");
+  CUTS[creator]=pct;
+  try{
+    const r=await fetch("/api/cut-set",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({creator,pct})});
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error||"save failed");
+    await load();
+  }catch(e){ showBanner("Cut save failed: "+e.message); setStatus(false,"save failed"); }
+  finally{ busy=false; }
+}
+
+load();
+setInterval(()=>{
+  if(busy) return;
+  if(document.activeElement && document.activeElement.tagName==="INPUT") return;
+  load();
+}, 20000);
 </script>
 </body>
 </html>
