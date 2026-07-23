@@ -67,6 +67,19 @@
   .pill.paid{color:var(--green); background:rgba(95,201,123,.14)}
   .pill.due{color:var(--brand); background:rgba(245,181,68,.12)}
 
+  .amtbox{display:flex; align-items:center; gap:3px}
+  .amtbox span{color:var(--fg-mute); font-family:var(--mono); font-size:13px}
+  .amtbox input{width:82px; text-align:right; background:var(--panel-2); border:1px solid var(--line);
+    color:var(--fg); font-family:var(--mono); font-size:13.5px; padding:6px 8px; border-radius:var(--r-sm); outline:none}
+  .amtbox input:focus{border-color:var(--brand)}
+  .btn{font-family:var(--mono); font-size:11px; padding:6px 11px; border-radius:99px; cursor:pointer;
+    background:var(--panel-2); border:1px solid var(--line); color:var(--fg-dim); white-space:nowrap; transition:.15s}
+  .btn:hover{border-color:var(--line-2); color:var(--fg)}
+  .btn.on{background:rgba(95,201,123,.14); border-color:rgba(95,201,123,.35); color:var(--green); font-weight:600}
+  .saving{opacity:.5; pointer-events:none}
+  .err{background:rgba(244,104,94,.1); border:1px solid rgba(244,104,94,.3); color:var(--red);
+    border-radius:var(--r-sm); padding:10px 14px; font-family:var(--mono); font-size:11.5px; margin-bottom:18px; display:none}
+
   .gate{text-align:center; padding:80px 20px; color:var(--fg-mute); font-family:var(--mono); font-size:13px}
   .foot{margin-top:40px; padding-top:18px; border-top:1px solid var(--line); color:var(--fg-mute);
     font-family:var(--mono); font-size:11px}
@@ -134,24 +147,71 @@ function render(){
     <div class="stat net"><div class="n" style="color:var(--green)">${fmt(net)}</div><div class="l">Your net take</div></div>
   </div>`;
 
+  const row=v=>{
+    const i=vids.indexOf(v);
+    const val=v.amount!=null?v.amount:"";
+    const meta=v.paid?(v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'):esc(v.status||'in progress');
+    return `<div class="deal" data-row="${i}">
+      <div class="ttl">${esc(v.title)}<div class="meta">${meta}</div></div>
+      <div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
+      <button class="btn${v.paid?' on':''}" data-act="paid" data-i="${i}">${v.paid?'Paid':'Mark paid'}</button>
+    </div>`;
+  };
+
   if(paid.length){
     html+=`<div class="group"><div class="group-label">Paid <span class="c">${paid.length}</span></div>`;
-    html+=paid.map(v=>`<div class="deal"><div class="ttl">${esc(v.title)}<div class="meta">${v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'}</div></div>
-      <span class="pill paid">Paid</span><span class="amt" style="color:var(--green)">${fmt(v.amount)}</span></div>`).join("")+`</div>`;
+    html+=paid.map(row).join("")+`</div>`;
   }
 
   if(awaiting.length){
     html+=`<div class="group"><div class="group-label">Awaiting payment <span class="c">${awaiting.length}</span></div>`;
-    html+=awaiting.map(v=>`<div class="deal"><div class="ttl">${esc(v.title)}<div class="meta">${esc(v.status||'in progress')}</div></div>
-      <span class="pill due">Unpaid</span><span class="amt" style="color:${v.amount?'var(--fg)':'var(--fg-mute)'}">${v.amount?fmt(v.amount):'—'}</span></div>`).join("")+`</div>`;
+    html+=awaiting.map(row).join("")+`</div>`;
   }
 
   if(!mine.length){
     html+=`<div class="gate">No brand deals in this cycle yet — they'll show up here as they come in.</div>`;
   }
 
-  $("content").innerHTML=html;
+  $("content").innerHTML=`<div class="err" id="err"></div>`+html;
   document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;render();});
+  document.querySelectorAll("[data-act]").forEach(el=>{
+    const i=+el.dataset.i, v=vids[i];
+    if(el.dataset.act==="amt"){
+      el.onchange=()=>{ const n=parseInt(String(el.value).replace(/[^0-9]/g,""),10); save(v,{amount:isNaN(n)?null:n}); };
+    }
+    if(el.dataset.act==="paid"){
+      el.onclick=()=>{ const p=!v.paid; save(v,{paid:p,paidDate:p?(v.paidDate||new Date().toISOString().slice(0,10)):""}); };
+    }
+  });
+}
+
+function showErr(msg){ const e=$("err"); if(!e)return; if(!msg){e.style.display="none";return;} e.textContent=msg; e.style.display="block"; }
+
+let busy=false;
+async function save(v,patch){
+  if(busy) return;
+  busy=true; setLive("syncing"); showErr("");
+  document.querySelectorAll(".deal").forEach(d=>d.classList.add("saving"));
+  const body={
+    link:v.link,
+    amount:("amount" in patch)?patch.amount:v.amount,
+    paid:("paid" in patch)?patch.paid:v.paid,
+    paidDate:("paidDate" in patch)?patch.paidDate:v.paidDate,
+  };
+  try{
+    const res=await fetch(`/api/client-set?k=${encodeURIComponent(key)}`,{
+      method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)
+    });
+    const j=await res.json();
+    if(!res.ok||!j.ok) throw new Error(j.error||"couldn't save");
+    busy=false;
+    await sync();
+  }catch(e){
+    busy=false;
+    document.querySelectorAll(".deal").forEach(d=>d.classList.remove("saving"));
+    setLive("stale");
+    showErr("Couldn't save: "+String(e.message||e));
+  }
 }
 
 let lastOk=null;
@@ -174,7 +234,11 @@ async function sync(){
   }
 }
 setInterval(tickAgo,1000);
-setInterval(sync,POLL);
+setInterval(()=>{
+  if(busy) return;
+  if(document.activeElement && document.activeElement.tagName==="INPUT") return;
+  sync();
+},POLL);
 sync();
 </script>
 </body>
