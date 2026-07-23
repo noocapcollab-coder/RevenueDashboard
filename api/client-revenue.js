@@ -144,6 +144,7 @@ module.exports = async function handler(req, res) {
         status: v.status,
         cycle: v.cycle,
         date: v.date,
+        link: v.link,
         amount: r ? r.amount : null,
         paid: r ? r.paid : false,
         paidDate: r ? r.paidDate : "",
