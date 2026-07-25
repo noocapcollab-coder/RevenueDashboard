@@ -96,6 +96,7 @@ const selectName = (page, name) => { const v = props(page)[name]; return v && v.
 const checkbox = (page, name) => { const v = props(page)[name]; return !!(v && v.type === "checkbox" && v.checkbox); };
 const urlOf = (page, name) => { const v = props(page)[name]; return v && v.type === "url" ? v.url : ""; };
 const dateStart = (page, name) => { const v = props(page)[name]; return v && v.type === "date" && v.date ? v.date.start : ""; };
+const richText = (page, name) => { const v = props(page)[name]; return v && v.type === "rich_text" ? (v.rich_text || []).map((t) => t.plain_text).join("") : ""; };
 
 module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -127,7 +128,7 @@ module.exports = async function handler(req, res) {
     const revByLink = {};
     revRows.forEach((pg) => {
       const l = urlOf(pg, "Video Link");
-      if (l) revByLink[l] = { amount: num(pg, "Amount USD"), paid: checkbox(pg, "Paid"), paidDate: dateStart(pg, "Payment Received") };
+      if (l) revByLink[l] = { revPageId: pg.id, amount: num(pg, "Amount USD"), paid: checkbox(pg, "Paid"), paidDate: dateStart(pg, "Payment Received"), notes: richText(pg, "Notes") };
     });
 
     // This creator's cut %
@@ -148,6 +149,7 @@ module.exports = async function handler(req, res) {
         amount: r ? r.amount : null,
         paid: r ? r.paid : false,
         paidDate: r ? r.paidDate : "",
+        notes: r ? r.notes : "",
       };
     });
     out.sort((a, b) => a.title.localeCompare(b.title));
