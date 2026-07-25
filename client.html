@@ -58,10 +58,25 @@
   .group-label .c{font-family:var(--mono); color:var(--data); font-size:11px}
   .group-label::after{content:"";flex:1;height:1px;background:var(--line)}
 
-  .deal{display:flex; align-items:center; gap:14px; background:var(--panel); border:1px solid var(--line);
-    border-radius:var(--r); padding:15px 18px; margin-bottom:11px}
+  .modebar{display:flex; align-items:center; gap:8px; margin-bottom:14px}
+  .modebar .mlabel{font-family:var(--mono); font-size:11px; color:var(--fg-mute); margin-right:2px}
+  .modebar button{font-family:var(--mono); font-size:11px; color:var(--fg-dim); background:var(--panel);
+    border:1px solid var(--line); border-radius:99px; padding:5px 12px; cursor:pointer; transition:.15s}
+  .modebar button.on{color:var(--ink); background:var(--data); border-color:var(--data); font-weight:600}
+
+  .deal{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:15px 18px; margin-bottom:11px}
+  .deal-main{display:flex; align-items:center; gap:14px}
   .deal .ttl{flex:1; font-weight:600; font-size:14.5px; line-height:1.35}
   .deal .meta{font-family:var(--mono); font-size:11px; color:var(--fg-mute); margin-top:3px}
+  .notebtn{width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r-sm); color:var(--fg-mute); cursor:pointer; transition:.15s; font-size:14px}
+  .notebtn:hover{border-color:var(--line-2); color:var(--fg-dim)}
+  .notebtn.has{color:var(--brand); border-color:rgba(245,181,68,.35); background:rgba(245,181,68,.08)}
+  .notewrap{margin-top:13px; padding-top:13px; border-top:1px solid var(--line)}
+  .notewrap textarea{width:100%; min-height:64px; background:var(--panel-2); border:1px solid var(--line); color:var(--fg);
+    font-family:"Inter",system-ui,sans-serif; font-size:13.5px; line-height:1.5; padding:11px 13px; border-radius:var(--r-sm); outline:none; resize:vertical}
+  .notewrap textarea:focus{border-color:var(--brand)}
+  .notewrap .hint{font-family:var(--mono); font-size:10.5px; color:var(--fg-mute); margin-top:6px}
   .amt{font-family:var(--mono); font-weight:700; font-size:16px; letter-spacing:-.01em; white-space:nowrap}
   .pill{font-size:10px; font-weight:600; padding:3px 9px; border-radius:99px; white-space:nowrap; letter-spacing:.03em}
   .pill.paid{color:var(--green); background:rgba(95,201,123,.14)}
@@ -106,8 +121,10 @@ const fmt=n=>"$"+Math.round(Number(n)||0).toLocaleString();
 const fmtDate=iso=>iso?new Date(iso).toLocaleDateString("en-US",{month:"short",day:"numeric"}):null;
 const MIDX={JAN:1,FEB:2,MAR:3,APR:4,MAY:5,JUN:6,JUL:7,AUG:8,SEP:9,OCT:10,NOV:11,DEC:12};
 const cycleRank=c=>c==="undated"?-1:(MIDX[String(c).slice(0,3).toUpperCase()]||0);
+const fmtMonth=m=>{ if(!m)return"—"; const d=new Date(m+"-01"); return d.toLocaleDateString("en-US",{month:"short",year:"numeric"}); };
 
-let DATA=null, selCycle="";
+let DATA=null, mode="cycle", selCycle="", selMonth="";
+const expanded=new Set();
 
 function cyclesOf(vids){
   const set=new Set(); let u=false;
@@ -116,20 +133,37 @@ function cyclesOf(vids){
   if(u) list.push("undated");
   return list;
 }
+function monthsOf(vids){
+  const set=new Set();
+  vids.forEach(v=>{ if(v.paid&&v.paidDate) set.add(v.paidDate.slice(0,7)); });
+  return [...set].sort().reverse();
+}
 
 function render(){
   const d=DATA; if(!d){return;}
   const vids=d.videos||[];
-  const cyc=cyclesOf(vids);
-  if(!cyc.includes(selCycle)) selCycle=cyc[0]||"";
-  const clabel=selCycle==="undated"?"Undated":(selCycle||"—");
-  const inC=v=> selCycle==="undated" ? !v.cycle : v.cycle===selCycle;
-
-  const mine=vids.filter(inC);
-  const paid=mine.filter(v=>v.paid);
-  const awaiting=mine.filter(v=>!v.paid);
-  const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
   const pct=Number(d.cutPct)||0;
+
+  let pills, clabel, paid, awaiting;
+  if(mode==="month"){
+    const mo=monthsOf(vids);
+    if(!mo.includes(selMonth)) selMonth=mo[0]||"";
+    pills=mo.map(m=>({v:m,label:fmtMonth(m)}));
+    clabel=selMonth?fmtMonth(selMonth):"—";
+    paid=vids.filter(v=>v.paid&&v.paidDate&&v.paidDate.slice(0,7)===selMonth);
+    awaiting=vids.filter(v=>!v.paid);
+  }else{
+    const cyc=cyclesOf(vids);
+    if(!cyc.includes(selCycle)) selCycle=cyc[0]||"";
+    pills=cyc.map(c=>({v:c,label:c==="undated"?"Undated":c}));
+    clabel=selCycle==="undated"?"Undated":(selCycle||"—");
+    const inC=v=> selCycle==="undated" ? !v.cycle : v.cycle===selCycle;
+    const mine=vids.filter(inC);
+    paid=mine.filter(v=>v.paid);
+    awaiting=mine.filter(v=>!v.paid);
+  }
+  const selVal = mode==="month"?selMonth:selCycle;
+  const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
   const cut=Math.round(gross*pct/100);
   const net=gross-cut;
 
@@ -137,24 +171,37 @@ function render(){
   html+=`<div class="hero">Hey <span class="nm">${esc(d.creator)}</span> 👋</div>`;
   html+=`<div class="sub">Every brand deal you've got with NOOCAP, and exactly what you've been paid — updated live.</div>`;
 
-  if(cyc.length){
-    html+=`<div class="cycles">`+cyc.map(c=>`<button data-cyc="${esc(c)}" class="${c===selCycle?'on':''}">${c==='undated'?'Undated':esc(c)}</button>`).join("")+`</div>`;
+  html+=`<div class="modebar"><span class="mlabel">View by</span>
+    <button data-mode="cycle" class="${mode==='cycle'?'on':''}">Billing cycle</button>
+    <button data-mode="month" class="${mode==='month'?'on':''}">Payment month</button></div>`;
+
+  if(pills.length){
+    html+=`<div class="cycles">`+pills.map(p=>`<button data-sel="${esc(p.v)}" class="${p.v===selVal?'on':''}">${esc(p.label)}</button>`).join("")+`</div>`;
   }
 
   html+=`<div class="stats">
     <div class="stat"><div class="n" style="color:var(--green)">${fmt(gross)}</div><div class="l">Gross received · ${esc(clabel)}</div></div>
     <div class="stat"><div class="n" style="color:var(--purple)">${fmt(cut)}</div><div class="l">NOOCAP cut · ${pct}%</div></div>
-    <div class="stat net"><div class="n" style="color:var(--green)">${fmt(net)}</div><div class="l">Your net take</div></div>
+    <div class="stat net"><div class="n" style="color:var(--green)">${fmt(net)}</div><div class="l">Payment received</div></div>
   </div>`;
 
   const row=v=>{
     const i=vids.indexOf(v);
     const val=v.amount!=null?v.amount:"";
     const meta=v.paid?(v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'):esc(v.status||'in progress');
+    const hasNote=!!(v.notes&&v.notes.trim());
+    const open=expanded.has(v.link);
+    const noteArea=open?`<div class="notewrap">
+        <textarea data-act="note" data-i="${i}" placeholder="Add a note — e.g. paid upfront, split across months, sent short…">${esc(v.notes||"")}</textarea>
+        <div class="hint">Saves when you click away.</div>
+      </div>`:"";
     return `<div class="deal" data-row="${i}">
-      <div class="ttl">${esc(v.title)}<div class="meta">${meta}</div></div>
-      <div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
-      <button class="btn${v.paid?' on':''}" data-act="paid" data-i="${i}">${v.paid?'Paid':'Mark paid'}</button>
+      <div class="deal-main">
+        <div class="ttl">${esc(v.title)}<div class="meta">${meta}</div></div>
+        <div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
+        <button class="btn${v.paid?' on':''}" data-act="paid" data-i="${i}">${v.paid?'Paid':'Mark paid'}</button>
+        <button class="notebtn${hasNote?' has':''}" data-act="notetoggle" data-i="${i}" title="${hasNote?'Edit note':'Add note'}">✎</button>
+      </div>${noteArea}
     </div>`;
   };
 
@@ -162,18 +209,19 @@ function render(){
     html+=`<div class="group"><div class="group-label">Paid <span class="c">${paid.length}</span></div>`;
     html+=paid.map(row).join("")+`</div>`;
   }
-
   if(awaiting.length){
-    html+=`<div class="group"><div class="group-label">Awaiting payment <span class="c">${awaiting.length}</span></div>`;
+    const lbl = mode==="month" ? "Awaiting payment · all outstanding" : "Awaiting payment";
+    html+=`<div class="group"><div class="group-label">${lbl} <span class="c">${awaiting.length}</span></div>`;
     html+=awaiting.map(row).join("")+`</div>`;
   }
-
-  if(!mine.length){
-    html+=`<div class="gate">No brand deals in this cycle yet — they'll show up here as they come in.</div>`;
+  if(!paid.length && !awaiting.length){
+    html+=`<div class="gate">${mode==="month"?"No payments received in this month yet.":"No brand deals in this cycle yet — they'll show up here as they come in."}</div>`;
   }
 
   $("content").innerHTML=`<div class="err" id="err"></div>`+html;
-  document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;render();});
+
+  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{mode=b.dataset.mode;render();});
+  document.querySelectorAll("[data-sel]").forEach(b=>b.onclick=()=>{ if(mode==="month") selMonth=b.dataset.sel; else selCycle=b.dataset.sel; render(); });
   document.querySelectorAll("[data-act]").forEach(el=>{
     const i=+el.dataset.i, v=vids[i];
     if(el.dataset.act==="amt"){
@@ -181,6 +229,12 @@ function render(){
     }
     if(el.dataset.act==="paid"){
       el.onclick=()=>{ const p=!v.paid; save(v,{paid:p,paidDate:p?(v.paidDate||new Date().toISOString().slice(0,10)):""}); };
+    }
+    if(el.dataset.act==="notetoggle"){
+      el.onclick=()=>{ if(expanded.has(v.link)) expanded.delete(v.link); else expanded.add(v.link); render(); };
+    }
+    if(el.dataset.act==="note"){
+      el.onchange=()=>{ save(v,{notes:el.value}); };
     }
   });
 }
@@ -198,6 +252,7 @@ async function save(v,patch){
     paid:("paid" in patch)?patch.paid:v.paid,
     paidDate:("paidDate" in patch)?patch.paidDate:v.paidDate,
   };
+  if("notes" in patch) body.notes=patch.notes;
   try{
     const res=await fetch(`/api/client-set?k=${encodeURIComponent(key)}`,{
       method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body)
@@ -236,7 +291,8 @@ async function sync(){
 setInterval(tickAgo,1000);
 setInterval(()=>{
   if(busy) return;
-  if(document.activeElement && document.activeElement.tagName==="INPUT") return;
+  const t=document.activeElement && document.activeElement.tagName;
+  if(t==="INPUT"||t==="TEXTAREA") return;
   sync();
 },POLL);
 sync();
