@@ -46,7 +46,7 @@
   .cycles button:hover{border-color:var(--line-2)}
   .cycles button.on{color:var(--ink); background:var(--brand); border-color:var(--brand); font-weight:600}
 
-  .stats{display:grid; grid-template-columns:repeat(3,1fr); gap:13px; margin-bottom:26px}
+  .stats{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:13px; margin-bottom:26px}
   .stat{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:17px 18px}
   .stat .n{font-family:var(--mono); font-weight:700; font-size:28px; letter-spacing:-.02em; line-height:1}
   .stat .l{color:var(--fg-dim); font-size:12px; margin-top:8px}
@@ -166,14 +166,15 @@ function render(){
   const vids=d.videos||[];
   const pct=Number(d.cutPct)||0;
 
-  let pills, clabel, paid, awaiting;
+  let pills, clabel, paid, upcoming, open;
   if(mode==="month"){
     const mo=monthsOf(vids);
     if(!mo.includes(selMonth)) selMonth=mo[0]||"";
     pills=mo.map(m=>({v:m,label:fmtMonth(m)}));
     clabel=selMonth?fmtMonth(selMonth):"—";
     paid=vids.filter(v=>v.paid&&v.paidDate&&v.paidDate.slice(0,7)===selMonth);
-    awaiting=vids.filter(v=>!v.paid);
+    upcoming=vids.filter(v=>!v.paid&&Number(v.amount)>0);
+    open=vids.filter(v=>!v.paid&&!(Number(v.amount)>0));
   }else{
     const cyc=cyclesOf(vids);
     if(!cyc.includes(selCycle)) selCycle=cyc[0]||"";
@@ -182,12 +183,14 @@ function render(){
     const inC=v=> selCycle==="undated" ? !v.cycle : v.cycle===selCycle;
     const mine=vids.filter(inC);
     paid=mine.filter(v=>v.paid);
-    awaiting=mine.filter(v=>!v.paid);
+    upcoming=mine.filter(v=>!v.paid&&Number(v.amount)>0);
+    open=mine.filter(v=>!v.paid&&!(Number(v.amount)>0));
   }
   const selVal = mode==="month"?selMonth:selCycle;
   const gross=paid.reduce((a,v)=>a+(v.amount||0),0);
   const cut=Math.round(gross*pct/100);
   const net=gross-cut;
+  const upcomingTotal=upcoming.reduce((a,v)=>a+(v.amount||0),0);
 
   let html="";
   html+=`<div class="hero">Hey <span class="nm">${esc(d.creator)}</span> 👋</div>`;
@@ -203,6 +206,7 @@ function render(){
 
   html+=`<div class="stats">
     <div class="stat"><div class="n" style="color:var(--green)">${fmt(gross)}</div><div class="l">Gross received · ${esc(clabel)}</div></div>
+    <div class="stat"><div class="n" style="color:var(--data)">${fmt(upcomingTotal)}</div><div class="l">Upcoming · expected</div></div>
     <div class="stat"><div class="n" style="color:var(--purple)">${fmt(cut)}</div><div class="l">NOOCAP cut · ${pct}%</div></div>
     <div class="stat net"><div class="n" style="color:var(--green)">${fmt(net)}</div><div class="l">Payment received</div></div>
   </div>`;
@@ -246,12 +250,15 @@ function render(){
     html+=`<div class="group"><div class="group-label">Paid <span class="c">${paid.length}</span></div>`;
     html+=paid.map(row).join("")+`</div>`;
   }
-  if(awaiting.length){
-    const lbl = mode==="month" ? "Awaiting payment · all outstanding" : "Awaiting payment";
-    html+=`<div class="group"><div class="group-label">${lbl} <span class="c">${awaiting.length}</span></div>`;
-    html+=awaiting.map(row).join("")+`</div>`;
+  if(upcoming.length){
+    html+=`<div class="group"><div class="group-label">Upcoming · expected <span class="c">${upcoming.length}</span></div>`;
+    html+=upcoming.map(row).join("")+`</div>`;
   }
-  if(!paid.length && !awaiting.length){
+  if(open.length){
+    html+=`<div class="group"><div class="group-label">Awaiting amount <span class="c">${open.length}</span></div>`;
+    html+=open.map(row).join("")+`</div>`;
+  }
+  if(!paid.length && !upcoming.length && !open.length){
     html+=`<div class="gate">${mode==="month"?"No payments received in this month yet.":"No brand deals in this cycle yet — they'll show up here as they come in."}</div>`;
   }
 
