@@ -122,6 +122,9 @@ module.exports = async function handler(req, res) {
       "Payment Received": paid && paidDate ? { date: { start: paidDate } } : { date: null },
       "Video Link": { url: b.link },
     };
+    if (typeof b.notes === "string") {
+      properties["Notes"] = { rich_text: b.notes ? [{ text: { content: b.notes.slice(0, 1900) } }] : [] };
+    }
 
     const r = existing
       ? await fetch(`${NOTION}/pages/${existing.id}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ properties }) })
