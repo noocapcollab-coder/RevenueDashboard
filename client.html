@@ -65,7 +65,7 @@
   .modebar button.on{color:var(--ink); background:var(--data); border-color:var(--data); font-weight:600}
 
   .deal{background:var(--panel); border:1px solid var(--line); border-radius:var(--r); padding:15px 18px; margin-bottom:11px}
-  .deal-main{display:flex; align-items:center; gap:14px}
+  .deal-main{display:flex; align-items:center; gap:14px; flex-wrap:wrap}
   .deal .ttl{flex:1; font-weight:600; font-size:14.5px; line-height:1.35}
   .deal .meta{font-family:var(--mono); font-size:11px; color:var(--fg-mute); margin-top:3px}
   .notebtn{width:32px; height:32px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
@@ -77,6 +77,18 @@
     font-family:"Inter",system-ui,sans-serif; font-size:13.5px; line-height:1.5; padding:11px 13px; border-radius:var(--r-sm); outline:none; resize:vertical}
   .notewrap textarea:focus{border-color:var(--brand)}
   .notewrap .hint{font-family:var(--mono); font-size:10.5px; color:var(--fg-mute); margin-top:6px}
+  .dateinput{background:var(--panel-2); border:1px solid var(--line); color:var(--fg); font-family:var(--mono);
+    font-size:12px; padding:6px 8px; border-radius:var(--r-sm); outline:none; color-scheme:dark}
+  .dateinput:focus{border-color:var(--brand)}
+  .tagchip{font-size:9.5px; font-weight:600; padding:2px 7px; border-radius:99px; letter-spacing:.03em; margin-left:6px}
+  .tagchip.full{color:var(--green); background:rgba(95,201,123,.14)}
+  .tagchip.split{color:var(--brand); background:rgba(245,181,68,.14)}
+  .tagrow{display:flex; align-items:center; gap:8px; margin-bottom:11px}
+  .taglbl{font-family:var(--mono); font-size:11px; color:var(--fg-mute)}
+  .tagbtn{font-family:var(--mono); font-size:11px; color:var(--fg-dim); background:var(--panel-2);
+    border:1px solid var(--line); border-radius:99px; padding:5px 13px; cursor:pointer; transition:.15s}
+  .tagbtn:hover{border-color:var(--line-2)}
+  .tagbtn.on{background:rgba(245,181,68,.14); border-color:rgba(245,181,68,.35); color:var(--brand); font-weight:600}
   .amt{font-family:var(--mono); font-weight:700; font-size:16px; letter-spacing:-.01em; white-space:nowrap}
   .pill{font-size:10px; font-weight:600; padding:3px 9px; border-radius:99px; white-space:nowrap; letter-spacing:.03em}
   .pill.paid{color:var(--green); background:rgba(95,201,123,.14)}
@@ -138,6 +150,16 @@ function monthsOf(vids){
   vids.forEach(v=>{ if(v.paid&&v.paidDate) set.add(v.paidDate.slice(0,7)); });
   return [...set].sort().reverse();
 }
+function parseNote(s){
+  const m=String(s||"").match(/^\[(Full|Split)\]\s?([\s\S]*)$/i);
+  if(m){ const t=m[1].toLowerCase(); return {tag:t.charAt(0).toUpperCase()+t.slice(1), body:m[2]}; }
+  return {tag:"", body:String(s||"")};
+}
+function composeNote(tag,body){
+  const b=(body||"").trim();
+  if(tag) return `[${tag}]`+(b?` ${b}`:"");
+  return b;
+}
 
 function render(){
   const d=DATA; if(!d){return;}
@@ -188,18 +210,33 @@ function render(){
   const row=v=>{
     const i=vids.indexOf(v);
     const val=v.amount!=null?v.amount:"";
-    const meta=v.paid?(v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'):esc(v.status||'in progress');
-    const hasNote=!!(v.notes&&v.notes.trim());
+    const parsed=parseNote(v.notes||"");
+    const hasNote=!!(parsed.body.trim()||parsed.tag);
     const open=expanded.has(v.link);
+    const meta=v.paid?(v.paidDate?('paid '+fmtDate(v.paidDate)):'paid'):esc(v.status||'in progress');
+    const tagChip=parsed.tag?`<span class="tagchip ${parsed.tag.toLowerCase()}">${parsed.tag}</span>`:"";
+    const today=new Date().toISOString().slice(0,10);
+    let controls;
+    if(v.paid){
+      controls=`<div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
+        <button class="btn on" data-act="paid" data-i="${i}">Paid</button>`;
+    }else{
+      controls=`<div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
+        <input class="dateinput" type="date" data-act="pdate" data-i="${i}" value="${v.paidDate||today}" title="Payment date" />
+        <button class="btn" data-act="paid" data-i="${i}">Mark paid</button>`;
+    }
     const noteArea=open?`<div class="notewrap">
-        <textarea data-act="note" data-i="${i}" placeholder="Add a note — e.g. paid upfront, split across months, sent short…">${esc(v.notes||"")}</textarea>
+        <div class="tagrow"><span class="taglbl">Payment</span>
+          <button class="tagbtn ${parsed.tag==='Full'?'on':''}" data-act="tag" data-tag="Full" data-i="${i}">Full</button>
+          <button class="tagbtn ${parsed.tag==='Split'?'on':''}" data-act="tag" data-tag="Split" data-i="${i}">Split</button>
+        </div>
+        <textarea data-act="note" data-i="${i}" placeholder="Add a note — e.g. paid upfront, split across months, sent short…">${esc(parsed.body)}</textarea>
         <div class="hint">Saves when you click away.</div>
       </div>`:"";
     return `<div class="deal" data-row="${i}">
       <div class="deal-main">
-        <div class="ttl">${esc(v.title)}<div class="meta">${meta}</div></div>
-        <div class="amtbox"><span>$</span><input inputmode="numeric" data-act="amt" data-i="${i}" value="${val}" placeholder="0" /></div>
-        <button class="btn${v.paid?' on':''}" data-act="paid" data-i="${i}">${v.paid?'Paid':'Mark paid'}</button>
+        <div class="ttl">${esc(v.title)}${tagChip}<div class="meta">${meta}</div></div>
+        ${controls}
         <button class="notebtn${hasNote?' has':''}" data-act="notetoggle" data-i="${i}" title="${hasNote?'Edit note':'Add note'}">✎</button>
       </div>${noteArea}
     </div>`;
@@ -228,13 +265,21 @@ function render(){
       el.onchange=()=>{ const n=parseInt(String(el.value).replace(/[^0-9]/g,""),10); save(v,{amount:isNaN(n)?null:n}); };
     }
     if(el.dataset.act==="paid"){
-      el.onclick=()=>{ const p=!v.paid; save(v,{paid:p,paidDate:p?(v.paidDate||new Date().toISOString().slice(0,10)):""}); };
+      el.onclick=()=>{
+        if(v.paid){ save(v,{paid:false,paidDate:""}); return; }
+        const di=document.querySelector(`input[data-act="pdate"][data-i="${i}"]`);
+        const date=(di&&di.value)||new Date().toISOString().slice(0,10);
+        save(v,{paid:true,paidDate:date});
+      };
     }
     if(el.dataset.act==="notetoggle"){
       el.onclick=()=>{ if(expanded.has(v.link)) expanded.delete(v.link); else expanded.add(v.link); render(); };
     }
+    if(el.dataset.act==="tag"){
+      el.onclick=()=>{ const p=parseNote(v.notes||""); const t=p.tag===el.dataset.tag?"":el.dataset.tag; save(v,{notes:composeNote(t,p.body)}); };
+    }
     if(el.dataset.act==="note"){
-      el.onchange=()=>{ save(v,{notes:el.value}); };
+      el.onchange=()=>{ const p=parseNote(v.notes||""); save(v,{notes:composeNote(p.tag,el.value)}); };
     }
   });
 }
