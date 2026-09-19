@@ -19,6 +19,7 @@ function buildProps(b) {
   }
   p["Paid"] = { checkbox: !!b.paid };
   p["Payment Received"] = b.paid && b.paidDate ? { date: { start: b.paidDate } } : { date: null };
+  if (typeof b.cutCollected !== "undefined") p["Cut Collected"] = { checkbox: !!b.cutCollected };
   if (b.link) p["Video Link"] = { url: b.link };
   if (typeof b.brand === "string") p["Brand"] = { rich_text: [{ text: { content: b.brand.slice(0, 200) } }] };
   return p;
