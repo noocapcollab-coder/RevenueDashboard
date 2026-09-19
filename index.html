@@ -84,6 +84,9 @@
   .pay.on{background:var(--accentd);border-color:var(--accentd);color:var(--accent)}
   .del{background:transparent;border:1px solid var(--line);color:var(--muted);font:inherit;font-size:13px;line-height:1;padding:5px 9px;border-radius:7px;cursor:pointer}
   .del:hover{color:var(--danger);border-color:#3b1d28}
+  .cutc{background:var(--card2);border:1px solid var(--line);color:var(--muted);font:inherit;font-size:11px;padding:5px 9px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .cutc.on{background:var(--indigod);border-color:var(--indigod);color:var(--indigo)}
+  .cutgot{color:var(--indigo)} .cutdue{color:var(--amber)}
   .dt{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:11px;padding:4px 6px;border-radius:7px;outline:none;color-scheme:dark}
   .empty{color:var(--muted);font-size:12px;padding:10px 0;border-top:1px solid var(--line)}
   .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
@@ -210,9 +213,11 @@ function grid(){
 
   const cutTot=names.reduce((a,n)=>a+cutAmt(n),0);
   const earners=names.filter(n=>cutAmt(n)>0).sort((a,b)=>cutAmt(b)-cutAmt(a));
+  let cutColl=0, cutOwe=0;
+  VIDEOS.forEach(v=>{ if(v.paid&&v.amount){ const c=v.amount*cutOf(v.creator)/100; if(v.cutCollected) cutColl+=c; else cutOwe+=c; } });
   const noocap='<div class="noocap"><div class="hd">'+
     '<div class="badge"><span class="b">N</span> NOOCAP cut</div>'+
-    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap">agency take · all cycles</div></div></div>'+
+    '<div><div class="big">'+fmt(cutTot)+'</div><div class="cap"><span class="cutgot">'+fmt(cutColl)+' collected</span> · <span class="cutdue">'+fmt(cutOwe)+' owed</span></div></div></div>'+
     '<div class="split">'+(earners.length?earners.map(n=>'<div class="s"><b>'+fmt(cutAmt(n))+'</b> '+n+'</div>').join(""):'<div class="s">No collected revenue yet.</div>')+'</div></div>';
 
   const cards=show.length?show.map(n=>{
@@ -255,10 +260,11 @@ function detail(n){
     const sugg=(!v.amount&&v.suggested)?'<button class="sugg" data-act="sugg" data-i="'+i+'">use '+fmt(v.suggested)+'</button>':"";
     const recv=v.paid?'<input class="dt" type="date" data-act="date" data-i="'+i+'" value="'+(v.paidDate||"")+'"/>':"";
     const del=v.revPageId?'<button class="del" data-act="del" data-i="'+i+'" title="Remove this revenue entry">✕</button>':"";
+    const cutc=v.paid?'<button class="cutc'+(v.cutCollected?" on":"")+'" data-act="cutc" data-i="'+i+'" title="'+(v.cutCollected?"Commission collected from creator":"Commission not collected yet")+'">'+(v.cutCollected?"cut in ✓":"cut owed")+'</button>':"";
     return '<div class="v"><div class="m"><div class="t">'+esc(v.title)+'</div>'+
       '<div class="st">'+chip(v.status)+openLink(v)+'</div></div>'+
       '<div class="ab"><span>$</span><input inputmode="numeric" data-act="amt" data-i="'+i+'" value="'+amount+'" placeholder="0"/></div>'+sugg+
-      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+del+'</div>';
+      '<button class="pay'+(v.paid?" on":"")+'" data-act="paid" data-i="'+i+'">'+(v.paid?"Paid":"Mark paid")+'</button>'+recv+cutc+del+'</div>';
   };
   const pills=cyc.length?'<div class="pills cyc">'+cyc.map(c=>'<button data-cyc="'+esc(c)+'" class="'+(c===selCycle?"on":"")+'">'+(c==="undated"?"Undated":esc(c))+'</button>').join("")+'</div>':"";
   $("view").innerHTML='<button class="back" id="back"><i class="ti ti-arrow-left" aria-hidden="true"></i> All creators</button>'+
@@ -278,6 +284,7 @@ function detail(n){
     if(a==="sugg")el.onclick=()=>save(v,{amount:v.suggested});
     if(a==="paid")el.onclick=()=>{const paid=!v.paid;save(v,{paid,paidDate:paid?(v.paidDate||today()):""});};
     if(a==="date")el.onchange=()=>save(v,{paid:true,paidDate:el.value});
+    if(a==="cutc")el.onclick=()=>save(v,{cutCollected:!v.cutCollected});
     if(a==="del")el.onclick=()=>delEntry(v);
   });
 }
@@ -290,6 +297,7 @@ async function save(v, patch){
     amount:("amount" in patch)?patch.amount:v.amount,
     paid:("paid" in patch)?patch.paid:v.paid,
     paidDate:("paidDate" in patch)?patch.paidDate:v.paidDate,
+    cutCollected:("cutCollected" in patch)?patch.cutCollected:v.cutCollected,
   };
   try{
     const r=await fetch("/api/revenue-set",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
