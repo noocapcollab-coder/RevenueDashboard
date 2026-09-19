@@ -139,6 +139,7 @@ module.exports = async function handler(req, res) {
       amount: num(pg, "Amount USD"),
       paid: checkbox(pg, "Paid"),
       paidDate: dateStart(pg, "Payment Received"),
+      cutCollected: checkbox(pg, "Cut Collected"),
     }));
     const revByLink = {};
     revRows.forEach((r) => { if (r.link) revByLink[r.link] = r; });
@@ -173,6 +174,7 @@ module.exports = async function handler(req, res) {
         amount: rev ? rev.amount : null,
         paid: rev ? rev.paid : false,
         paidDate: rev ? rev.paidDate : "",
+        cutCollected: rev ? rev.cutCollected : false,
         suggested: rev && rev.amount ? null : suggest(v.creator, v.title),
       };
     });
