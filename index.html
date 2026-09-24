@@ -114,6 +114,104 @@
   <div class="banner" id="banner"></div>
   <div id="view"></div>
 
+<div id="lock" style="position:fixed;inset:0;z-index:9999;background:#0a0e17;display:flex;align-items:center;justify-content:center;padding:20px">
+  <form id="lockform" style="width:100%;max-width:330px;background:#141b2b;border:1px solid #212c44;border-radius:14px;padding:22px">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px">
+      <span style="width:26px;height:26px;border-radius:8px;background:#34d399;color:#04231a;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">N</span>
+      <span style="font-size:15px;font-weight:600;color:#eef1f7">Sponsor revenue</span>
+    </div>
+    <p style="margin:0 0 16px;font-size:12px;color:#8b94ab;line-height:1.6">This view is limited to Harsh and Pratham.</p>
+    <input id="lockpw" type="password" autocomplete="current-password" placeholder="Password" required
+      style="width:100%;background:#0f1626;border:1px solid #212c44;border-radius:9px;padding:10px 12px;color:#eef1f7;font:inherit;font-size:14px;outline:none" />
+    <div id="lockerr" style="display:none;margin-top:9px;font-size:12px;color:#fb7185"></div>
+    <button id="lockbtn" type="submit"
+      style="width:100%;margin-top:12px;background:#34d399;border:0;border-radius:9px;padding:10px;color:#04231a;font:inherit;font-size:14px;font-weight:600;cursor:pointer">Unlock</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  var TOKEN = null, waiters = [], booted = false;
+  try { TOKEN = sessionStorage.getItem("rev_token"); } catch (e) {}
+
+  var lock = document.getElementById("lock");
+  var form = document.getElementById("lockform");
+  var pw = document.getElementById("lockpw");
+  var err = document.getElementById("lockerr");
+  var btn = document.getElementById("lockbtn");
+  var realFetch = window.fetch.bind(window);
+
+  function showLock(message) {
+    lock.style.display = "flex";
+    if (message) { err.textContent = message; err.style.display = "block"; }
+    pw.value = "";
+    setTimeout(function () { pw.focus(); }, 30);
+  }
+  function hideLock() { lock.style.display = "none"; err.style.display = "none"; }
+
+  function unlocked() {
+    if (TOKEN) return Promise.resolve();
+    return new Promise(function (resolve) { waiters.push(resolve); });
+  }
+
+  window.fetch = function (url, opts) {
+    var u = String(url && url.url ? url.url : url);
+    if (u.indexOf("/api/") !== 0 || u.indexOf("/api/login") === 0) return realFetch(url, opts);
+    return unlocked().then(function () {
+      var o = Object.assign({}, opts || {});
+      o.headers = Object.assign({}, o.headers || {}, { Authorization: "Bearer " + TOKEN });
+      return realFetch(url, o).then(function (r) {
+        if (r.status === 401) {
+          TOKEN = null;
+          try { sessionStorage.removeItem("rev_token"); } catch (e) {}
+          showLock("Session expired. Enter the password again.");
+        }
+        return r;
+      });
+    });
+  };
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var value = pw.value;
+    if (!value) { err.textContent = "Enter the password."; err.style.display = "block"; return; }
+    err.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Checking…";
+    realFetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: value })
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (out) {
+        btn.disabled = false;
+        btn.textContent = "Unlock";
+        if (!out.ok || !out.j.token) {
+          err.textContent = (out.j && out.j.error) || "Wrong password";
+          err.style.display = "block";
+          pw.value = "";
+          pw.focus();
+          return;
+        }
+        TOKEN = out.j.token;
+        try { sessionStorage.setItem("rev_token", TOKEN); } catch (e) {}
+        hideLock();
+        if (booted) { location.reload(); return; }
+        booted = true;
+        waiters.splice(0).forEach(function (fn) { fn(); });
+      })
+      .catch(function (e2) {
+        btn.disabled = false;
+        btn.textContent = "Unlock";
+        err.textContent = "Couldn't reach the server. Try again.";
+        err.style.display = "block";
+      });
+  });
+
+  if (TOKEN) { booted = true; hideLock(); } else { showLock(); }
+})();
+</script>
+
 <script>
 const fmt=n=>"$"+Math.round(Number(n)||0).toLocaleString();
 const mKey=s=>(s||"").slice(0,7);
