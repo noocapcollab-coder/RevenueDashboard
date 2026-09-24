@@ -67,6 +67,15 @@ function isSponsor(page) {
   }
   return false;
 }
+function isLongForm(page) {
+  for (const [name, v] of Object.entries(props(page))) {
+    if (!/format/i.test(name)) continue;
+    if (v.type === "select" && v.select && /long/i.test(v.select.name)) return true;
+    if (v.type === "status" && v.status && /long/i.test(v.status.name)) return true;
+    if (v.type === "multi_select" && Array.isArray(v.multi_select) && v.multi_select.some((o) => /long/i.test(o.name))) return true;
+  }
+  return false;
+}
 function cycleOf(page) {
   for (const [name, v] of Object.entries(props(page))) {
     if (!/month/i.test(name)) continue;
@@ -114,7 +123,7 @@ module.exports = async function handler(req, res) {
     }
 
     let videos = pages
-      .filter(isSponsor)
+      .filter((pg) => isSponsor(pg) && !isLongForm(pg))
       .map((pg) => ({ title: titleOf(pg) || "(untitled)", status: statusOf(pg), link: pg.url || pg.id, cycle: cycleOf(pg), date: videoDate(pg) }))
       .filter((v) => v.status !== "Archive");
     const seen = new Set();
