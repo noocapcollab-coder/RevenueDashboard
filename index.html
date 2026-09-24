@@ -92,12 +92,20 @@
   .banner{background:#2a1416;border:1px solid #4a2024;color:#fda4af;padding:10px 12px;border-radius:10px;margin:12px 0;display:none}
   .banner.soft{background:#2a230f;border-color:#4a3a10;color:var(--amber)}
   .pills.cyc{display:flex;flex-wrap:wrap;margin-bottom:12px}
-  .snap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .snap{margin:2px 0 6px}
+  .snaprow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .snap select{background:var(--card2);border:1px solid var(--line);color:var(--text);font:inherit;font-size:12px;padding:5px 8px;border-radius:8px;outline:none;color-scheme:dark;cursor:pointer}
   .snap select:focus{border-color:var(--indigo)}
   .snap .fig{font-size:12px;color:var(--muted);white-space:nowrap}
   .snap .fig b{color:var(--text);font-weight:600}
   .snap .fig .cutf{color:var(--indigo)}
+  .snaplist{margin-top:9px;background:var(--card2);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .snaplist .sl{display:flex;align-items:center;gap:10px;padding:9px 12px;border-top:1px solid var(--line);font-size:13px}
+  .snaplist .sl:first-child{border-top:0}
+  .snaplist .slt{flex:1;color:var(--text)}
+  .snaplist .sld{font-size:11px;color:var(--muted);white-space:nowrap}
+  .snaplist .sla{color:var(--accent);font-weight:600;white-space:nowrap;min-width:58px;text-align:right}
+  .snaplist .sl.empty{color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -202,12 +210,18 @@ function renderSnap(n){
   const host=$("snap-"+n); if(!host) return;
   if(!mo.length){ host.innerHTML='<span class="fig">No payments received yet.</span>'; return; }
   if(!mo.includes(snapMonth)) snapMonth=mo[0];
-  const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&v.paidDate&&v.paidDate.slice(0,7)===snapMonth);
+  const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&v.paidDate&&v.paidDate.slice(0,7)===snapMonth)
+    .sort((a,b)=>(a.paidDate<b.paidDate?1:-1));
   const grossM=paid.reduce((a,v)=>a+(v.amount||0),0);
   const cutM=paid.reduce((a,v)=>a+Math.round((v.amount||0)*cutOf(n)/100),0);
-  host.innerHTML='<select id="snapsel">'+
+  const list=paid.length
+    ? '<div class="snaplist">'+paid.map(v=>'<div class="sl"><span class="slt">'+esc(v.title)+'</span>'+
+        '<span class="sld">'+(v.paidDate?new Date(v.paidDate).toLocaleDateString("en",{month:"short",day:"numeric"}):"")+'</span>'+
+        '<span class="sla">'+fmt(v.amount)+'</span></div>').join("")+'</div>'
+    : '<div class="snaplist"><div class="sl empty">No payments received in '+fmtMl(snapMonth)+'.</div></div>';
+  host.innerHTML='<div class="snaprow"><select id="snapsel">'+
     mo.map(m=>'<option value="'+m+'"'+(m===snapMonth?" selected":"")+'>'+fmtMl(m)+'</option>').join("")+'</select>'+
-    '<span class="fig"><b>'+paid.length+'</b> payment'+(paid.length===1?"":"s")+' · <b>'+fmt(grossM)+'</b> received · <span class="cutf">'+fmt(cutM)+' NOOCAP cut</span></span>';
+    '<span class="fig"><b>'+paid.length+'</b> payment'+(paid.length===1?"":"s")+' · <b>'+fmt(grossM)+'</b> received · <span class="cutf">'+fmt(cutM)+' NOOCAP cut</span></span></div>'+list;
   const sel=$("snapsel"); if(sel) sel.onchange=()=>{ snapMonth=sel.value; renderSnap(n); };
 }
 function kpis(){
