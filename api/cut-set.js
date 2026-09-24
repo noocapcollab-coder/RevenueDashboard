@@ -2,6 +2,7 @@
 // Upserts a creator's NOOCAP cut percentage in the Creator Cut table.
 // POST body: { creator, pct }   (pct is a plain number, 20 means 20%)
 
+const { requireAdmin } = require("../lib/auth.js");
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
 const TOKEN = process.env.NOTION_TOKEN;
@@ -21,6 +22,7 @@ async function readBody(req) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!requireAdmin(req, res)) return;
   try {
     if (req.method !== "POST") return res.status(405).json({ ok: false, error: "POST only" });
     if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
