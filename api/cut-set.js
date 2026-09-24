@@ -1,18 +1,69 @@
-// NOOCAP Sponsor Revenue — cut write endpoint
-// Upserts a creator's NOOCAP cut percentage in the Creator Cut table.
-// POST body: { creator, pct }   (pct is a plain number, 20 means 20%)
+// api/client-set.js — client-facing write endpoint.
+// A client (identified only by ?k=<portal key>) can set the amount and paid
+// status on ONE of their own sponsor videos. The creator is resolved SERVER-SIDE
+// from the key, and the video link is verified to actually live on that creator's
+// board before anything is written — so a tampered link can't touch another
+// creator's row. The Creator field is always written from the resolved name,
+// never from client input.
 
-const { requireAdmin } = require("../lib/auth.js");
+const { KEY_TO_NAME } = require("../lib/creators.js");
+
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
 const TOKEN = process.env.NOTION_TOKEN;
-const CUT_DS = "d63fb0df-db77-4cd9-9c94-0d74a36cfebf";
+const REV_DS = "9f799a64-92cb-4d7b-83b7-100f5bc77464";
 
+const BOARDS = {
+  Chris: ["2a1508e9-9dda-8125-bd63-000bb75578dd", "337508e9-9dda-806a-b4e7-000b6cee3fb6"],
+  Lindsay: ["301508e9-9dda-811b-83c7-000b46be09b1", "65e508e9-9dda-8201-8e80-871793a70fa9"],
+  Emtech: ["328508e9-9dda-8000-b3c9-000b0d791507"],
+  Duncan: ["328508e9-9dda-8186-b4ca-000bd212e84b"],
+  Valeri: ["f0dbec00-505d-4e16-8e51-b2fcfea21445"],
+  Dymtro: ["36b508e9-9dda-8004-a37f-000b460c8c46"],
+};
+
+const headers = () => ({
+  Authorization: `Bearer ${TOKEN}`,
+  "Notion-Version": VERSION,
+  "Content-Type": "application/json",
+});
+
+async function queryAll(dataSourceId) {
+  const rows = [];
+  let cursor;
+  do {
+    const body = { page_size: 100 };
+    if (cursor) body.start_cursor = cursor;
+    const r = await fetch(`${NOTION}/data_sources/${dataSourceId}/query`, {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) throw new Error(`Notion ${r.status}`);
+    const j = await r.json();
+    rows.push(...(j.results || []));
+    cursor = j.has_more ? j.next_cursor : null;
+  } while (cursor);
+  return rows;
+}
+
+function props(p) { return p.properties || {}; }
 function titleOf(page) {
-  for (const v of Object.values(page.properties || {}))
+  for (const v of Object.values(props(page)))
     if (v.type === "title") return (v.title || []).map((t) => t.plain_text).join("").trim();
   return "";
 }
+function isSponsor(page) {
+  for (const v of Object.values(props(page))) {
+    if (v.type === "select" && v.select && /sponsor/i.test(v.select.name)) return true;
+    if (v.type === "status" && v.status && /sponsor/i.test(v.status.name)) return true;
+    if (v.type === "multi_select" && Array.isArray(v.multi_select) && v.multi_select.some((o) => /sponsor/i.test(o.name))) return true;
+  }
+  return false;
+}
+const selectName = (page, name) => { const v = props(page)[name]; return v && v.type === "select" && v.select ? v.select.name : ""; };
+const urlOf = (page, name) => { const v = props(page)[name]; return v && v.type === "url" ? v.url : ""; };
+
 async function readBody(req) {
   if (req.body && typeof req.body === "object") return req.body;
   const chunks = [];
@@ -22,47 +73,68 @@ async function readBody(req) {
 }
 
 module.exports = async function handler(req, res) {
-  if (!requireAdmin(req, res)) return;
+  res.setHeader("Cache-Control", "no-store");
   try {
     if (req.method !== "POST") return res.status(405).json({ ok: false, error: "POST only" });
-    if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
+    if (!TOKEN) throw new Error("Missing NOTION_TOKEN");
+
+    const key = (req.query && (req.query.k || req.query.key)) || "";
+    const creator = KEY_TO_NAME[key];
+    if (!creator) return res.status(404).json({ ok: false, error: "This portal link isn't active. Check with NOOCAP." });
+
     const b = await readBody(req);
-    if (!b.creator) throw new Error("creator required");
+    if (!b.link) return res.status(400).json({ ok: false, error: "link required" });
 
-    const n = Number(b.pct);
-    const pct = isNaN(n) ? 0 : Math.max(0, Math.min(100, n));
-    const headers = {
-      Authorization: `Bearer ${TOKEN}`,
-      "Notion-Version": VERSION,
-      "Content-Type": "application/json",
-    };
+    // Verify the video actually belongs to THIS creator's board.
+    let owned = null;
+    for (const ds of BOARDS[creator] || []) {
+      let pages = [];
+      try { pages = await queryAll(ds); } catch { continue; }
+      const hit = pages.find((pg) => (pg.url || pg.id) === b.link);
+      if (hit && isSponsor(hit)) { owned = hit; break; }
+    }
+    if (!owned) return res.status(403).json({ ok: false, error: "That video isn't on your board." });
 
-    // Find an existing row for this creator
-    const q = await fetch(`${NOTION}/data_sources/${CUT_DS}/query`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ page_size: 100 }),
-    });
-    if (!q.ok) throw new Error(`Notion ${q.status}: ${(await q.text()).slice(0, 200)}`);
-    const existing = ((await q.json()).results || []).find((pg) => titleOf(pg) === b.creator);
+    // Find this creator's existing revenue row for that video.
+    let existing = null;
+    try {
+      existing = (await queryAll(REV_DS)).find(
+        (pg) => urlOf(pg, "Video Link") === b.link && selectName(pg, "Creator") === creator
+      );
+    } catch { /* create fresh */ }
+
+    const amtRaw = b.amount;
+    let amount = null;
+    if (!(amtRaw === null || amtRaw === "" || typeof amtRaw === "undefined")) {
+      const n = Number(amtRaw);
+      amount = isNaN(n) ? null : Math.max(0, n);
+    }
+    const paid = !!b.paid;
+    const paidDate = paid ? (b.paidDate || new Date().toISOString().slice(0, 10)) : "";
 
     const properties = {
-      "Creator": { title: [{ text: { content: b.creator } }] },
-      "Cut Percent": { number: pct },
+      "Video Title": { title: [{ text: { content: (titleOf(owned) || "(untitled)").slice(0, 200) } }] },
+      "Creator": { select: { name: creator } },   // server-set, never from the client
+      "Amount USD": { number: amount },
+      "Paid": { checkbox: paid },
+      "Payment Received": paid && paidDate ? { date: { start: paidDate } } : { date: null },
+      "Video Link": { url: b.link },
     };
-
-    let r;
-    if (existing) {
-      r = await fetch(`${NOTION}/pages/${existing.id}`, { method: "PATCH", headers, body: JSON.stringify({ properties }) });
-    } else {
-      r = await fetch(`${NOTION}/pages`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ parent: { type: "data_source_id", data_source_id: CUT_DS }, properties }),
-      });
+    if (typeof b.notes === "string") {
+      properties["Notes"] = { rich_text: b.notes ? [{ text: { content: b.notes.slice(0, 1900) } }] : [] };
     }
-    if (!r.ok) throw new Error(`Notion ${r.status}: ${(await r.text()).slice(0, 300)}`);
-    res.status(200).json({ ok: true, creator: b.creator, pct });
+
+    const r = existing
+      ? await fetch(`${NOTION}/pages/${existing.id}`, { method: "PATCH", headers: headers(), body: JSON.stringify({ properties }) })
+      : await fetch(`${NOTION}/pages`, {
+          method: "POST",
+          headers: headers(),
+          body: JSON.stringify({ parent: { type: "data_source_id", data_source_id: REV_DS }, properties }),
+        });
+    if (!r.ok) throw new Error(`Notion ${r.status}: ${(await r.text()).slice(0, 200)}`);
+
+    const page = await r.json();
+    res.status(200).json({ ok: true, revPageId: page.id, amount, paid, paidDate });
   } catch (e) {
     res.status(500).json({ ok: false, error: String(e.message || e) });
   }
