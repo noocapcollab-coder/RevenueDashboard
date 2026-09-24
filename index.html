@@ -104,6 +104,7 @@
   .snaplist .sl:first-child{border-top:0}
   .snaplist .slt{flex:1;color:var(--text)}
   .snaplist .sld{font-size:11px;color:var(--muted);white-space:nowrap}
+  .snaplist .slcut{font-size:11px;color:var(--indigo);white-space:nowrap;min-width:78px;text-align:right}
   .snaplist .sla{color:var(--accent);font-weight:600;white-space:nowrap;min-width:58px;text-align:right}
   .snaplist .sl.empty{color:var(--muted);font-size:12px}
 </style>
@@ -217,6 +218,7 @@ function renderSnap(n){
   const list=paid.length
     ? '<div class="snaplist">'+paid.map(v=>'<div class="sl"><span class="slt">'+esc(v.title)+'</span>'+
         '<span class="sld">'+(v.paidDate?new Date(v.paidDate).toLocaleDateString("en",{month:"short",day:"numeric"}):"")+'</span>'+
+        '<span class="slcut">'+cutOf(n)+'% · '+fmt(Math.round((v.amount||0)*cutOf(n)/100))+'</span>'+
         '<span class="sla">'+fmt(v.amount)+'</span></div>').join("")+'</div>'
     : '<div class="snaplist"><div class="sl empty">No payments received in '+fmtMl(snapMonth)+'.</div></div>';
   host.innerHTML='<div class="snaprow"><select id="snapsel">'+
