@@ -192,22 +192,23 @@ function creatorCycles(n){
   return list;
 }
 
-function paymentMonths(){
+function paymentMonths(n){
   const set=new Set();
-  VIDEOS.forEach(v=>{ if(v.paid&&v.paidDate) set.add(v.paidDate.slice(0,7)); });
+  VIDEOS.forEach(v=>{ if(v.creator===n&&v.paid&&v.paidDate) set.add(v.paidDate.slice(0,7)); });
   return [...set].sort().reverse();
 }
-function renderSnap(){
-  const mo=paymentMonths();
-  if(!mo.length){ $("months").innerHTML=""; return; }
+function renderSnap(n){
+  const mo=paymentMonths(n);
+  const host=$("snap-"+n); if(!host) return;
+  if(!mo.length){ host.innerHTML='<span class="fig">No payments received yet.</span>'; return; }
   if(!mo.includes(snapMonth)) snapMonth=mo[0];
-  const paid=VIDEOS.filter(v=>v.paid&&v.paidDate&&v.paidDate.slice(0,7)===snapMonth);
+  const paid=VIDEOS.filter(v=>v.creator===n&&v.paid&&v.paidDate&&v.paidDate.slice(0,7)===snapMonth);
   const grossM=paid.reduce((a,v)=>a+(v.amount||0),0);
-  const cutM=paid.reduce((a,v)=>a+Math.round((v.amount||0)*cutOf(v.creator)/100),0);
-  $("months").innerHTML='<div class="snap"><select id="snapsel">'+
+  const cutM=paid.reduce((a,v)=>a+Math.round((v.amount||0)*cutOf(n)/100),0);
+  host.innerHTML='<select id="snapsel">'+
     mo.map(m=>'<option value="'+m+'"'+(m===snapMonth?" selected":"")+'>'+fmtMl(m)+'</option>').join("")+'</select>'+
-    '<span class="fig"><b>'+paid.length+'</b> payment'+(paid.length===1?"":"s")+' · <b>'+fmt(grossM)+'</b> received · <span class="cutf">'+fmt(cutM)+' NOOCAP cut</span></span></div>';
-  const sel=$("snapsel"); if(sel) sel.onchange=()=>{ snapMonth=sel.value; renderSnap(); };
+    '<span class="fig"><b>'+paid.length+'</b> payment'+(paid.length===1?"":"s")+' · <b>'+fmt(grossM)+'</b> received · <span class="cutf">'+fmt(cutM)+' NOOCAP cut</span></span>';
+  const sel=$("snapsel"); if(sel) sel.onchange=()=>{ snapMonth=sel.value; renderSnap(n); };
 }
 function kpis(){
   const names=[...new Set(VIDEOS.map(v=>v.creator))];
@@ -223,7 +224,7 @@ function kpis(){
   $("k-rate").textContent=(booked?Math.round(got/booked*100):0)+"%";
 }
 function render(){
-  renderSnap();
+  $("months").innerHTML="";
   kpis();
   view==="grid"?grid():detail(view);
 }
@@ -295,10 +296,12 @@ function detail(n){
     '<div class="hero"><div class="av" style="background:'+(colors[n]||"#64748b")+'">'+ini(n)+'</div>'+
     '<div><div class="big">'+fmt(gross)+'</div><div class="cap">'+n+' · '+esc(clabel)+' · gross received</div>'+
     '<div class="splitline">NOOCAP cut <b>'+fmt(cut)+'</b> ('+cutOf(n)+'%) · creator net <span class="net">'+fmt(gross-cut)+'</span></div></div></div>'+
+    '<div class="snap" id="snap-'+esc(n)+'"></div>'+
     '<div class="sec">Paid · '+esc(clabel)+' ('+paid.length+')</div>'+
     (paid.length?paid.map(row).join(""):'<div class="empty">No payments received in this cycle.</div>')+
     '<div class="sec">Awaiting payment</div>'+
     (awaiting.length?awaiting.map(row).join(""):'<div class="empty">Nothing outstanding.</div>');
+  renderSnap(n);
   $("back").onclick=()=>{view="grid";render();};
   document.querySelectorAll("[data-cyc]").forEach(b=>b.onclick=()=>{selCycle=b.dataset.cyc;detail(n);});
   document.querySelectorAll("[data-act]").forEach(el=>{
