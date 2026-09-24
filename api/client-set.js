@@ -61,6 +61,15 @@ function isSponsor(page) {
   }
   return false;
 }
+function isLongForm(page) {
+  for (const [name, v] of Object.entries(props(page))) {
+    if (!/format/i.test(name)) continue;
+    if (v.type === "select" && v.select && /long/i.test(v.select.name)) return true;
+    if (v.type === "status" && v.status && /long/i.test(v.status.name)) return true;
+    if (v.type === "multi_select" && Array.isArray(v.multi_select) && v.multi_select.some((o) => /long/i.test(o.name))) return true;
+  }
+  return false;
+}
 const selectName = (page, name) => { const v = props(page)[name]; return v && v.type === "select" && v.select ? v.select.name : ""; };
 const urlOf = (page, name) => { const v = props(page)[name]; return v && v.type === "url" ? v.url : ""; };
 
@@ -91,7 +100,7 @@ module.exports = async function handler(req, res) {
       let pages = [];
       try { pages = await queryAll(ds); } catch { continue; }
       const hit = pages.find((pg) => (pg.url || pg.id) === b.link);
-      if (hit && isSponsor(hit)) { owned = hit; break; }
+      if (hit && isSponsor(hit) && !isLongForm(hit)) { owned = hit; break; }
     }
     if (!owned) return res.status(403).json({ ok: false, error: "That video isn't on your board." });
 
