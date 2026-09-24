@@ -14,14 +14,12 @@ const TOKEN = process.env.NOTION_TOKEN;
 const REV_DS = "9f799a64-92cb-4d7b-83b7-100f5bc77464";
 
 const BOARDS = {
-  Brad: ["28b508e9-9dda-81ba-8d7f-000b84b83fbd"],
-  Chris: ["2a1508e9-9dda-8125-bd63-000bb75578dd", "337508e9-9dda-806a-b4e7-000b6cee3fb6"],
-  Lindsay: ["301508e9-9dda-811b-83c7-000b46be09b1", "65e508e9-9dda-8201-8e80-871793a70fa9"],
+  Chris: ["2a1508e9-9dda-8125-bd63-000bb75578dd"],
+  Lindsay: ["301508e9-9dda-811b-83c7-000b46be09b1"],
   Emtech: ["328508e9-9dda-8000-b3c9-000b0d791507"],
   Duncan: ["328508e9-9dda-8186-b4ca-000bd212e84b"],
   Valeri: ["f0dbec00-505d-4e16-8e51-b2fcfea21445"],
   Dymtro: ["36b508e9-9dda-8004-a37f-000b460c8c46"],
-  Jonathan: ["370508e9-9dda-807b-9554-000ba747fde7"],
 };
 
 const headers = () => ({
