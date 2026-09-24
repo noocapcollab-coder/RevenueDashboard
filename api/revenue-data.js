@@ -1,6 +1,7 @@
 // NOOCAP Sponsor Revenue — read endpoint (internal only)
 // Resilient per-source reads + per-board diagnostics in `debug`.
 
+const { requireAdmin } = require("../lib/auth.js");
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
 const TOKEN = process.env.NOTION_TOKEN;
@@ -98,6 +99,7 @@ function videoDate(page) {
 }
 
 module.exports = async function handler(req, res) {
+  if (!requireAdmin(req, res)) return;
   try {
     if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
 
