@@ -1,7 +1,6 @@
 // NOOCAP Sponsor Revenue — read endpoint (internal only)
 // Resilient per-source reads + per-board diagnostics in `debug`.
 
-const { requireAdmin } = require("../lib/auth.js");
 const NOTION = "https://api.notion.com/v1";
 const VERSION = "2025-09-03";
 const TOKEN = process.env.NOTION_TOKEN;
@@ -11,14 +10,12 @@ const DEALS_DS = "70d26268-6d57-4d45-abf7-a599c6f8e0f4"; // Brand Deals Pipeline
 const CUT_DS = "d63fb0df-db77-4cd9-9c94-0d74a36cfebf";   // Creator Cut
 
 const BOARDS = {
-  Brad: ["28b508e9-9dda-81ba-8d7f-000b84b83fbd"],
   Chris: ["2a1508e9-9dda-8125-bd63-000bb75578dd", "337508e9-9dda-806a-b4e7-000b6cee3fb6"],
   Lindsay: ["301508e9-9dda-811b-83c7-000b46be09b1", "65e508e9-9dda-8201-8e80-871793a70fa9"],
   Emtech: ["328508e9-9dda-8000-b3c9-000b0d791507"],
   Duncan: ["328508e9-9dda-8186-b4ca-000bd212e84b"],
   Valeri: ["f0dbec00-505d-4e16-8e51-b2fcfea21445"],
   Dymtro: ["36b508e9-9dda-8004-a37f-000b460c8c46"],
-  Jonathan: ["370508e9-9dda-807b-9554-000ba747fde7"],
 };
 
 async function queryAll(dataSourceId) {
@@ -99,7 +96,6 @@ function videoDate(page) {
 }
 
 module.exports = async function handler(req, res) {
-  if (!requireAdmin(req, res)) return;
   try {
     if (!TOKEN) throw new Error("NOTION_TOKEN is not set");
 
